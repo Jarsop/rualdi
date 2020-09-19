@@ -11,10 +11,6 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rualdi", about = "Rust Aliasing Directory.")]
 struct Rad {
-    /// Activate debug mode
-    #[structopt(short, long)]
-    debug: bool,
-
     #[structopt(flatten)]
     radsubcmd: RadSubCmd,
 }
