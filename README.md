@@ -42,19 +42,33 @@ radl                             # List aliases
 ### Step 1: Installing `rualdi`
 
 #### From source
-
 ```sh
 cargo build --release
 cp target/release/rualdi <path>
 ```
 Where `<path>` is the path where you store your binaries.
 
-Or using `cargo-deb` if your are on Debian distro
+#### On Debian
+
+##### From source
 ```sh
 cargo install cargo-deb
 cargo deb
 sudo dpkg -i /target/debian/rualdi_<version>_<arch>.deb
 ```
+
+##### From .deb prebuilt released
+You can download a precompiled `.deb` package from the
+[releases](https://github.com/Jarsop/rualdi/releases) page and add run:
+
+```sh
+sudo dpkg -i /target/debian/rualdi_<version>_<arch>.deb
+```
+
+#### Other (via precompiled binary) [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=github%20releases&sort=semver)](https://github.com/Jarsop/rualdi/releases)
+Alternatively, you can also download a precompiled binary from the
+[releases](https://github.com/Jarsop/rualdi/releases) page and add it to
+your `PATH`.
 
 ### Step 2: Adding `rualdi` to your shell
 
