@@ -1,0 +1,38 @@
+[package]
+name = "rualdi"
+version = "0.1.0"
+authors = ["Jarsop <16677686+Jarsop@users.noreply.github.com>"]
+description = "Rust Aliasing Directory"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.116"
+serde_derive = "1.0.116"
+structopt = "0.3.17"
+anyhow = "1.0.32"
+shellexpand = "2.0.0"
+toml = "0.5.6"
+dirs = "3.0.1"
+
+[[bin]]
+name = "rualdi"
+path = "src/bin.rs"
+
+[dev-dependencies]
+tempdir = "0.3.7"
+
+[package.metadata.deb]
+maintainer = "Jarsop <16677686+Jarsop@users.noreply.github.com>"
+copyright = "2020, Jarsop <16677686+Jarsop@users.noreply.github.com>"
+license-file = ["LICENSE", "4"]
+extended-description = """\
+A tool to aliasing directories written safely in Rust."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/rualdi", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/rualdi/README", "644"],
+]
