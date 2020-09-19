@@ -1,11 +1,13 @@
 [package]
 name = "rualdi"
 version = "0.1.0"
-authors = ["Jarsop <16677686+Jarsop@users.noreply.github.com>"]
+authors = ["Jarsop <jarsop@outlook.com>"]
 description = "Rust Aliasing Directory"
 license = "AGPL-3.0-or-later"
 license-file = "LICENSE"
 edition = "2018"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "shell", "utility"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -38,3 +40,7 @@ assets = [
     ["target/release/rualdi", "usr/bin/", "755"],
     ["README.md", "usr/share/doc/rualdi/README", "644"],
 ]
+
+[profile.release]
+codegen-units = 1
+lto = true
