@@ -6,10 +6,10 @@ description = "Rust Aliasing Directory"
 license = "AGPL-3.0-or-later"
 license-file = "LICENSE"
 edition = "2018"
+repository = "https://github.com/jarsop/rualdi"
 categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "shell", "utility"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+readme = "README.md"
 
 [dependencies]
 serde = "1.0.116"
