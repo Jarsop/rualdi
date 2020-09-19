@@ -41,6 +41,11 @@ radl                             # List aliases
 
 ### Step 1: Installing `rualdi`
 
+#### From Cargo registry
+```sh
+cargo install rualdi -f
+```
+
 #### From source
 ```sh
 cargo build --release
