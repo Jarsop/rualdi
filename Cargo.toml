@@ -1,6 +1,6 @@
 [package]
 name = "rualdi"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Jarsop <jarsop@outlook.com>"]
 description = "Rust Aliasing Directory"
 license = "AGPL-3.0-or-later"
