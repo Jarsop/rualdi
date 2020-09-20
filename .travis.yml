@@ -6,7 +6,6 @@ deploy:
 on:
     tags: true
 
-
 rust:
   - stable
   - beta
