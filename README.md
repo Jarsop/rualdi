@@ -1,9 +1,9 @@
 # Rualdi
 
 [![crates.io](https://img.shields.io/crates/v/rualdi)](https://crates.io/crates/rualdi)
-[![Travis Status](https://travis-ci.com/Jarsop/rualdi.svg?branch=master)](https://travis-ci.com/Jarsop/rualdi)
-![Main workflow](https://github.com/Jarsop/rualdi/workflows/Main%20workflow/badge.svg?branch=master)
-[![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=github%20releases&sort=semver)](https://github.com/Jarsop/rualdi/releases)
+[![Travis (.com)](https://img.shields.io/travis/com/Jarsop/rualdi?label=Travis%20CI&logo=Travis)](https://travis-ci.com/Jarsop/rualdi)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Main%20workflow/master?label=GitHub&logo=GitHub)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Main+workflow%22)
+[![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
 
 Rust Aliasing Directory
 
@@ -75,7 +75,7 @@ You can download a precompiled `.deb` package from the
 sudo dpkg -i /target/debian/rualdi_<version>_<arch>.deb
 ```
 
-#### Other (via precompiled binary) [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=github%20releases&sort=semver)](https://github.com/Jarsop/rualdi/releases)
+#### Other (via precompiled binary) [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
 Alternatively, you can also download a precompiled binary from the
 [releases](https://github.com/Jarsop/rualdi/releases) page and add it to
 your `PATH`.
