@@ -1,8 +1,8 @@
 # Rualdi
 
 [![crates.io](https://img.shields.io/crates/v/rualdi)](https://crates.io/crates/rualdi)
-[![Build Status](https://travis-ci.com/Jarsop/rualdi.svg?branch=master)](https://travis-ci.com/Jarsop/rualdi)
-![.github/workflows/release.yml](https://github.com/Jarsop/rualdi/workflows/.github/workflows/release.yml/badge.svg)
+[![Travis Status](https://travis-ci.com/Jarsop/rualdi.svg?branch=master)](https://travis-ci.com/Jarsop/rualdi)
+![Main workflow](https://github.com/Jarsop/rualdi/workflows/Main%20workflow/badge.svg?branch=master)
 [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=github%20releases&sort=semver)](https://github.com/Jarsop/rualdi/releases)
 
 Rust Aliasing Directory
