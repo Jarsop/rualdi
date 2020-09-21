@@ -1,0 +1,253 @@
+name: Main workflow
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  # Run the `rustfmt` code formatter
+  rustfmt:
+    name: Rustfmt [Formatter]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  # Run the `clippy` linting tool
+  clippy:
+    name: Clippy [Linter]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy
+          override: true
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets --all-features -- -D clippy::all
+
+  # Run a security audit on dependencies
+  cargo_audit:
+    name: Cargo Audit [Security]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - run: cargo install --force cargo-audit
+      - run: cargo generate-lockfile
+      - uses: actions-rs/cargo@v1
+        with:
+          command: audit
+
+  # Ensure that the project could be successfully compiled
+  cargo_check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+    # Ensure that the project could be successfully compiled
+  cargo_test:
+    name: Cargo Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+# on:
+#   push:
+#     tags:
+#       - "v*" # push events to matching v*, i.e. v1.0, v20.15.10
+
+# jobs:
+#   quickcheck:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       version: ${{ steps.rustversion.outputs.rustversion }}
+#     steps:
+#     - uses: actions/checkout@v2
+#     - uses: actions-rs/toolchain@v1
+#       with:
+#         toolchain: stable
+#         override: true
+#         components: rustfmt, clippy
+#     - run: cargo check
+#     - run: cargo pkgid -p rualdi
+#     - run: 'echo "$(cargo pkgid -p rualdi | cut -d# -f2)"'
+#     - id: rustversion
+#       run: 'echo "::set-output name=rustversion::$(cargo pkgid -p rualdi | cut -d# -f2)"'
+
+#   build-linux:
+#     needs: quickcheck
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         target: ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl", "armv7-unknown-linux-musleabihf", "armv7-unknown-linux-gnueabihf"]
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions-rs/install@v0.1.2
+#         with:
+#           crate: cargo-deb
+#       - uses: actions-rs/cargo@v1
+#         with:
+#           use-cross: true
+#           command: deb
+#           args: --target ${{ matrix.target }} --deb-version ${{ needs.quickcheck.outputs.version }}_${{matrix.target}}
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: "rualdi-${{ matrix.target }}"
+#           path: "target/${{ matrix.target }}/release/rualdi"
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: "rualdi-${{ matrix.target }}"
+#           path: "target/${{ matrix.target }}/debian/rualdi_${{ needs.quickcheck.outputs.version }}_${{matrix.target}}.deb"
+
+#   build-darwin:
+#     runs-on: macos-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions-rs/cargo@v1
+#         with:
+#           command: build
+#           args: --release --target x86_64-apple-darwin
+#       - uses: actions/upload-artifact@v2
+#         with:
+#           name: "rualdi-x86_64-apple-darwin"
+#           path: "target/x86_64-apple-darwin/release/rualdi"
+
+  # release-upload:
+  #   needs:
+  #     - build-linux
+  #     - build-darwin
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: ${{ github.ref }}
+  #         release_name: Release ${{ github.ref }}
+
+  #     - uses: actions/download-artifact@v2
+
+  #     - name: Display structure of downloaded files
+  #       run: ls -lR
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-x86_64-unknown-linux-gnu/rualdi"
+  #         asset_name: "rualdi-x86_64-unknown-linux-gnu"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-x86_64-unknown-linux-gnu/rualdi_${{ needs.quickcheck.outputs.version }}_x86_64-unknown-linux-gnu.deb"
+  #         asset_name: "rualdi_${{ github.ref }}_x86_64-unknown-linux-musgnul.deb"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-x86_64-unknown-linux-musl/rualdi"
+  #         asset_name: "rualdi-x86_64-unknown-linux-musl"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-x86_64-unknown-linux-musl/rualdi_${{ needs.quickcheck.outputs.version }}_x86_64-unknown-linux-musl"
+  #         asset_name: "rualdi_${{ github.ref }}_x86_64-unknown-linux-musl.deb"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-armv7-unknown-linux-musleabihf/rualdi"
+  #         asset_name: "rualdi-armv7-unknown-linux-musleabihf"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-armv7-unknown-linux-musleabihf/rualdi_${{ github.ref }}_armv7-unknown-linux-musleabihf.deb"
+  #         asset_name: "rualdi_${{ github.ref }}_armv7-unknown-linux-musleabihf.deb"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-armv7-unknown-linux-gnueabihf/rualdi"
+  #         asset_name: "rualdi-armv7-unknown-linux-gnueabihf"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-armv7-unknown-linux-gnueabihf/rualdi_${{ github.ref }}_armv7-unknown-linux-gnueabihf.deb"
+  #         asset_name: "rualdi_${{ github.ref }}_armv7-unknown-linux-gnueabihf.deb"
+  #         asset_content_type: application/octet-stream
+
+  #     - uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: "rualdi-x86_64-apple-darwin/rualdi"
+  #         asset_name: "rualdi-x86_64-apple-darwin"
+  #         asset_content_type: application/octet-stream
