@@ -1,6 +1,7 @@
 use crate::config;
 use crate::utils;
 use anyhow::{Context, Result};
+use rualdlib::Aliases;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -17,7 +18,7 @@ impl Add {
     pub fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir()
             .with_context(|| format!("fail to add alias '{}'", self.alias))?;
-        let mut aliases = rualdi::Aliases::open(aliases_dir)
+        let mut aliases = Aliases::open(aliases_dir)
             .with_context(|| format!("fail to add alias '{}'", self.alias))?;
 
         let path = self.path.to_owned().unwrap_or(utils::get_current_dir()?);

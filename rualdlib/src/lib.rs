@@ -31,7 +31,7 @@ pub struct Aliases {
 /// ```
 /// # use anyhow::Result;
 /// # fn main() -> Result<()> {
-/// # use rualdi::*;
+/// # use rualdlib::Aliases;
 /// let home = std::env::var("HOME").unwrap();
 /// let aliases: Aliases = toml::from_str(r#"
 /// [aliases]

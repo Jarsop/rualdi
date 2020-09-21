@@ -1,5 +1,6 @@
 use crate::config;
 use anyhow::{Context, Result};
+use rualdlib::Aliases;
 use structopt::StructOpt;
 
 /// Remove alias
@@ -12,8 +13,7 @@ pub struct Remove {
 impl Remove {
     pub fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir().with_context(|| "fail to remove alias")?;
-        let mut aliases =
-            rualdi::Aliases::open(aliases_dir).with_context(|| "fail to remove alias")?;
+        let mut aliases = Aliases::open(aliases_dir).with_context(|| "fail to remove alias")?;
 
         for alias in &self.alias {
             aliases

@@ -1,0 +1,40 @@
+[package]
+name = "rualdi"
+version = "0.1.4"
+authors = ["Jarsop <jarsop@outlook.com>"]
+description = "Rust Aliasing Directory"
+license = "AGPL-3.0-or-later"
+edition = "2018"
+repository = "https://github.com/jarsop/rualdi"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "shell", "utility"]
+readme = "../README.md"
+
+[dependencies]
+rualdlib = { path = "../rualdlib" }
+structopt = "0.3.17"
+anyhow = "1.0.32"
+dirs = "3.0.1"
+
+[package.metadata.deb]
+maintainer = "Jarsop <16677686+Jarsop@users.noreply.github.com>"
+copyright = "2020, Jarsop <16677686+Jarsop@users.noreply.github.com>"
+license-file = ["LICENSE", "4"]
+extended-description = """\
+A tool to aliasing directories written safely in Rust."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/rualdi", "usr/bin/", "755"],
+    ["../README.md", "usr/share/doc/rualdi/README", "644"],
+]
+
+[package.metadata.rpm]
+package = "rualdi"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+rualdi = { path = "/usr/bin/rualdi" }

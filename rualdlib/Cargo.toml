@@ -1,0 +1,22 @@
+[package]
+name = "rualdlib"
+version = "0.1.0"
+authors = ["Jarsop <jarsop@outlook.com>"]
+description = "Rust Aliasing Directory"
+license = "AGPL-3.0-or-later"
+edition = "2018"
+repository = "https://github.com/jarsop/rualdi"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "shell", "utility"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0.116"
+serde_derive = "1.0.116"
+shellexpand = "2.0.0"
+toml = "0.5.6"
+anyhow = "1.0.32"
+
+[dev-dependencies]
+tempfile = "3.1.0"

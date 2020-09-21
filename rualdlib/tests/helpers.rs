@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fs::File;
 use std::io::Write;
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 
 pub struct TmpConfig {
     pub tmp_dir: TempDir,
@@ -10,7 +10,7 @@ pub struct TmpConfig {
 
 impl TmpConfig {
     pub fn create_dir() -> Result<Self> {
-        let tmp_dir = TempDir::new("test_rualdi")?;
+        let tmp_dir = Builder::new().prefix("test_rualdi").tempdir()?;
         let file_path = tmp_dir.path().join(".default");
         let tmp_file = File::create(file_path)?;
         Ok(TmpConfig { tmp_dir, tmp_file })

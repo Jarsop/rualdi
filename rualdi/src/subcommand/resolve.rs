@@ -1,6 +1,7 @@
 use crate::config;
 use crate::utils;
 use anyhow::{Context, Result};
+use rualdlib::Aliases;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -16,7 +17,7 @@ impl Resolve {
     pub fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir()
             .with_context(|| format!("fail to resolve alias path '{}'", self.path.display()))?;
-        let aliases = rualdi::Aliases::open(aliases_dir)
+        let aliases = Aliases::open(aliases_dir)
             .with_context(|| format!("fail to resolve alias for path '{}'", self.path.display()))?;
 
         let path;
@@ -35,7 +36,7 @@ impl Resolve {
 
 /// Get path radical and search it in config file,
 /// return original path if no alias found
-fn resolve_alias<P: AsRef<Path>>(path: P, aliases: rualdi::Aliases) -> Result<PathBuf> {
+fn resolve_alias<P: AsRef<Path>>(path: P, aliases: Aliases) -> Result<PathBuf> {
     let path = path.as_ref();
 
     let mut components = path.components().peekable();
@@ -61,11 +62,3 @@ fn resolve_alias<P: AsRef<Path>>(path: P, aliases: rualdi::Aliases) -> Result<Pa
     };
     Ok(result)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-
-// }
