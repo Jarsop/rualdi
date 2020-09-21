@@ -6,6 +6,7 @@
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Main%20workflow/master?label=GitHub&logo=GitHub)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Main+workflow%22)
 [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
 ![Crates.io](https://img.shields.io/crates/l/rualdi/0.1.4)
+[![Codecov](https://img.shields.io/codecov/c/github/Jarsop/rualdi)](https://codecov.io/gh/Jarsop/rualdi)
 
 Rust Aliasing Directory
 
