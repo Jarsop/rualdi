@@ -5,8 +5,14 @@ use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
 use std::collections::BTreeMap;
 use std::fs;
+#[cfg(test)]
+use std::fs::File;
 use std::io::prelude::*;
+#[cfg(test)]
+use std::io::Write;
 use std::path::{Path, PathBuf};
+#[cfg(test)]
+use tempfile::{Builder, TempDir};
 
 /// Contain aliases and assiociated path
 /// ```
@@ -217,8 +223,10 @@ impl Drop for Aliases {
     }
 }
 
+#[cfg(test)]
 pub struct MockAliases;
 
+#[cfg(test)]
 impl MockAliases {
     pub fn open() -> Aliases {
         let mut aliases: BTreeMap<String, String> = BTreeMap::new();
@@ -246,6 +254,43 @@ impl MockAliases {
             modified: false,
             aliases_file: PathBuf::new(),
         }
+    }
+}
+
+#[cfg(test)]
+pub struct TmpConfig {
+    pub tmp_dir: TempDir,
+    pub tmp_file: File,
+}
+
+#[cfg(test)]
+impl TmpConfig {
+    pub fn create_dir() -> Result<Self> {
+        let tmp_dir = Builder::new().prefix("test_rualdi").tempdir()?;
+        let file_path = tmp_dir.path().join(".default");
+        let tmp_file = File::create(file_path)?;
+        Ok(TmpConfig { tmp_dir, tmp_file })
+    }
+
+    pub fn with_empty(mut self) -> Result<Self> {
+        let file_path = self.tmp_dir.path().join("rualdi.toml");
+        self.tmp_file = File::create(file_path)?;
+        Ok(self)
+    }
+
+    pub fn with_base(mut self) -> Result<Self> {
+        let file_path = self.tmp_dir.path().join("rualdi.toml");
+        self.tmp_file = File::create(file_path)?;
+        writeln!(
+            self.tmp_file,
+            "# Rualdi aliases configuration file\n[aliases]\n"
+        )?;
+        Ok(self)
+    }
+
+    pub fn with_content(mut self, content: &str) -> Result<Self> {
+        writeln!(self.tmp_file, "{}", content)?;
+        Ok(self)
     }
 }
 
@@ -415,5 +460,55 @@ mod tests_list {
         let aliases = MockAliases::open_no_aliases();
         let output = aliases.list();
         assert!(output.is_none());
+    }
+}
+
+#[cfg(test)]
+mod test_open {
+    use super::*;
+
+    #[test]
+    fn open_config_not_existing() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?;
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        let expected_aliases = MockAliases::open_no_aliases();
+        assert!(aliases.is_ok());
+        assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
+        Ok(())
+    }
+
+    #[test]
+    fn open_config_empty_aliases() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?.with_base()?;
+
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        let expected_aliases = MockAliases::open_no_aliases();
+        assert!(aliases.is_ok());
+        assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
+        Ok(())
+    }
+
+    #[test]
+    fn open_config_empty_file() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?.with_empty()?;
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        let expected_aliases = MockAliases::open_no_aliases();
+        assert!(aliases.is_ok());
+        assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
+        Ok(())
+    }
+
+    #[test]
+    fn open_config_filled() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?
+            .with_base()?
+            .with_content(r#"test = "/test/haha""#)?
+            .with_content(r#"Home = "~""#)?;
+
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        let expected_aliases = MockAliases::open();
+        assert!(aliases.is_ok());
+        assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
+        Ok(())
     }
 }
