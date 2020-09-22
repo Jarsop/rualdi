@@ -19,7 +19,7 @@ dirs = "3.0.1"
 [package.metadata.deb]
 maintainer = "Jarsop <16677686+Jarsop@users.noreply.github.com>"
 copyright = "2020, Jarsop <16677686+Jarsop@users.noreply.github.com>"
-license-file = ["LICENSE", "4"]
+license-file = ["../LICENSE", "4"]
 extended-description = """\
 A tool to aliasing directories written safely in Rust."""
 depends = "$auto"
