@@ -1,0 +1,294 @@
+name: Release
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # Get Rualdi local and online version
+  version:
+    name: Get release version
+    runs-on: ubuntu-latest
+    outputs:
+      rualdlib_local_version: ${{ steps.rualdlib_local_version.outputs.version }}
+      rualdlib_online_version: ${{ steps.rualdlib_online_version.outputs.version }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup | Updating crates.io index
+        run: cargo search --limit 0
+
+      - name: Setup | Rualdlib local version
+        id: rualdlib_local_version
+        run: echo "::set-output name=version::$(grep -Pzo '\"rualdlib\"\nversion.*\n' rualdlib/Cargo.toml | grep -Pzo 'version.*\n' | tr '\0' '\n' | sed 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/')"
+
+      - name: Setup | Rualdlib online version
+        id: rualdlib_online_version
+        run: echo "::set-output name=version::$(cargo search rualdlib | sed 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/')"
+
+  # Build binary for every OS expect Windows
+  build_binaries:
+    needs: [version]
+    name: Build release binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - x86_64-apple-darwin
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu.tar.gz
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl.tar.gz
+          - target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_armv7-unknown-linux-musleabihf.tar.gz
+          - target: x86_64-apple-darwin
+            os: macOS-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-apple-darwin.tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup | Cache Cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          
+      - name: Setup | musl tools
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.target }}
+
+      - name: Setup | musl tools
+        if: contains(matrix.target, 'musl')
+        run: sudo apt-get install -y musl-tools
+
+      - name: Setup | armv7 tools
+        if: startsWith(matrix.target, 'armv7')
+        run: sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+      - name: Build | Build (x86_64)
+        if: startsWith(matrix.target, 'x86_64')
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+
+      - name: Build | Build (armv7)
+        if: startsWith(matrix.target, 'armv7')
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target ${{ matrix.target }}
+
+      - name: Post Setup | Strip x86_64 artifacts
+        if: startsWith(matrix.target, 'x86_64')
+        run: |
+          cd target/${{ matrix.target }}/release
+          strip rualdi
+          cd -
+
+      - name: Post Setup | Strip armv7 artifacts
+        if: startsWith(matrix.target, 'armv7')
+        run: |
+          cd target/${{ matrix.target }}/release
+          arm-linux-gnueabihf-strip rualdi
+          cd -
+
+      - name: Post Setup | Prepare artifacts [-nix]
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czvf ../../../${{ matrix.name }} rualdi
+          cd -
+
+      - name: Post Setup | Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+
+  build_deb:
+    needs: [version]
+    name: Build release deb packages
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu.deb
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl.deb
+          - target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_armv7-unknown-linux-musleabihf.deb
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Build | Deb x86_64 package
+        if: startsWith(matrix.target, 'x86_64')
+        uses: ebbflow-io/cargo-deb-amd64-ubuntu@1.0
+        with:
+          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdlib_local_version }} -o ${{ matrix.name }}
+
+      - name: Build | Deb armv7 package
+        if: startsWith(matrix.target, 'armv7')
+        uses: ebbflow-io/cargo-deb-armv7-debian@1.0
+        with:
+          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdlib_local_version }} -o ${{ matrix.name }} --no-strip
+
+      - name: Post Setup | Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+
+  build_rpm_fedora:
+    needs: [version]
+    name: Build release rpm Fedora package
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu_fedora.rpm
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl_fedora.rpm
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Build | Rpm Fedora package
+        uses: ebbflow-io/cargo-rpm-amd64-fedora@1.0
+        with:
+          cmd: cargo rpm build -v -t ${{ matrix.target }} -o ${{ matrix.name }}
+
+      - name: Post Setup | Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+  
+  build_rpm_opensuseleap:
+    needs: [version]
+    name: Build release rpm OpenSUSE Leap package
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu_opensuseleap.rpm
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl_opensuseleap.rpm
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+       
+      - name: Build | Rpm OpenSUSE Leap package
+        uses: ebbflow-io/cargo-rpm-amd64-opensuseleap@1.0
+        with:
+          cmd: cargo rpm build -v -t ${{ matrix.target }} -o ${{ matrix.name }}
+
+      - name: Post Setup | Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
+
+
+  github_release:
+    name: Create GitHub Release
+    needs: [build_binaries, build_deb, build_rpm_fedora, build_rpm_opensuseleap]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup | Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "^1.13.1"
+
+      - name: Setup | Artifacts
+        uses: actions/download-artifact@v2
+
+      - name: Setup | Checksums
+        run: for file in rualdi-*/rualdi-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
+
+      - name: Setup | Release notes
+        run: |
+          go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
+          git-chglog -c .github/chglog/release.yml $(git describe --tags) > RELEASE.md
+          cat RELEASE.md
+
+      - name: Build | Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          files: rualdi-*/rualdi-*
+          body_path: RELEASE.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+  cargo_publish:
+    needs: [version, github_release]
+    name: Publish Cargo Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup | Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build | Publish Rualdlib
+        if: startsWith(needs.version.outputs.rualdlib_local_version, needs.version.outputs.rualdlib_online_version) != true
+        run: cargo publish --manifest-path rualdlib/Cargo.toml --token ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Build | Publish Rualdi
+        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
