@@ -3,9 +3,11 @@
 [![crates.io](https://img.shields.io/crates/v/rualdi?logo=Rust)](https://crates.io/crates/rualdi)
 [![Crates.io](https://img.shields.io/crates/d/rualdi?label=crates.io%20downloads&logo=Rust)](https://crates.io/crates/rualdi)
 [![Travis (.com)](https://img.shields.io/travis/com/Jarsop/rualdi?label=Travis%20CI&logo=Travis)](https://travis-ci.com/Jarsop/rualdi)
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Main%20workflow/master?label=GitHub&logo=GitHub)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Main+workflow%22)
-[![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
-![Crates.io](https://img.shields.io/crates/l/rualdi/0.1.4)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Main%20workflow/master?label=Main%20workflow&logo=GitHub)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Main+workflow%22)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Release?label=Release&logo=Github)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Release%22)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/Jarsop/rualdi/Security%20audit?label=Audit&logo=Github)](https://github.com/Jarsop/rualdi/actions?query=workflow%3A%22Security+audit%22)
+[![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
+[![Crates.io](https://img.shields.io/crates/l/rualdi/0.1.4)](https://crates.io/crates/rualdi)
 [![Codecov](https://img.shields.io/codecov/c/github/Jarsop/rualdi)](https://codecov.io/gh/Jarsop/rualdi)
 
 Rust Aliasing Directory
