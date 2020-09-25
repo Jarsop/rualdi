@@ -7,9 +7,7 @@ license = "AGPL-3.0-or-later"
 edition = "2018"
 repository = "https://github.com/jarsop/rualdi"
 categories = ["command-line-utilities", "filesystem"]
-keywords = ["cli", "shell", "utility"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["cli", "shell", "utility", "bash", "zsh"]
 
 [dependencies]
 serde = "1.0.116"
