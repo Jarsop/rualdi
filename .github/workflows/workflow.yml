@@ -30,10 +30,20 @@ jobs:
   # Run the `clippy` linting tool
   clippy:
     name: Clippy [Linter]
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v2
+
+      # Workaround for restoring cache from action/cache getting corrupted for macOS
+      - name: Install GNU tar
+        if: runner.os == 'macOS'
+        run: |
+          brew install gnu-tar
+          echo "::add-path::/usr/local/opt/gnu-tar/libexec/gnubin"
 
       # Cache files between builds
       - name: Setup | Cache Cargo
@@ -101,6 +111,13 @@ jobs:
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v2
+
+      # Workaround for restoring cache from action/cache getting corrupted for macOS
+      - name: Install GNU tar
+        if: runner.os == 'macOS'
+        run: |
+          brew install gnu-tar
+          echo "::add-path::/usr/local/opt/gnu-tar/libexec/gnubin"
 
       # Cache files between builds
       - name: Setup | Cache Cargo
