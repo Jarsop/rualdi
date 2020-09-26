@@ -511,4 +511,48 @@ mod test_open {
         assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
         Ok(())
     }
+
+    #[test]
+    #[should_panic]
+    fn open_dir_not_existing() {
+        Aliases::open(PathBuf::from("/no-existant-path")).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod test_save {
+    use super::*;
+
+    #[test]
+    fn should_saved() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?
+            .with_base()?
+            .with_content(r#"test = "/test/haha""#)?
+            .with_content(r#"Home = "~""#)?;
+
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        assert!(aliases.is_ok());
+        let saved = aliases.unwrap().save();
+        assert!(saved.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn modified_should_saved() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?
+            .with_base()?
+            .with_content(r#"test = "/test/haha""#)?
+            .with_content(r#"Home = "~""#)?;
+
+        let alias = String::from("saved");
+        let path = String::from("/saved");
+
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        assert!(aliases.is_ok());
+        let mut aliases = aliases.unwrap();
+        aliases.add(alias, path)?;
+        let saved = aliases.save();
+        assert!(saved.is_ok());
+        Ok(())
+    }
 }
