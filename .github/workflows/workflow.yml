@@ -32,7 +32,7 @@ jobs:
     name: Clippy [Linter]
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup | Checkout
