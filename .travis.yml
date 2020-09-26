@@ -15,7 +15,7 @@ jobs:
 script:
   - cargo build --verbose
   - cargo test --verbose
-  - cd rualdlib && cargo build --verbose --target-dir ../target && cargo test --verbose --target-dir ../target && cd -
+  - cd rualdlib && cargo build --verbose --target-dir ../target && cargo test --verbose --target-dir ../target && cd ..
 
 cache: cargo
 
@@ -32,7 +32,6 @@ addons:
       - zlib1g-dev
 
 after_success: |
-  cd rualdlib &&
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
   cd kcov-master &&
