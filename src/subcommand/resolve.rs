@@ -13,8 +13,8 @@ pub struct Resolve {
     pub path: PathBuf,
 }
 
-impl Resolve {
-    pub fn run(&self) -> Result<String> {
+impl super::RadSubCmdRunnable for Resolve {
+    fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir()
             .with_context(|| format!("fail to resolve alias path '{}'", self.path.display()))?;
         let aliases = Aliases::open(aliases_dir)

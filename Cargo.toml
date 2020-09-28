@@ -16,6 +16,11 @@ structopt = "0.3.17"
 anyhow = "1.0.32"
 dirs = "3.0.1"
 
+[dev-dependencies]
+tempfile = "3.1.0"
+toml = "0.5.6"
+serial_test = "0.5.0"
+
 [package.metadata.deb]
 maintainer = "Jarsop <jarsop@outlook.com>"
 copyright = "2020, Jarsop <jarsop@outlook.com>"

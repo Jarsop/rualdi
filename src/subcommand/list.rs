@@ -7,8 +7,8 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 pub struct List {}
 
-impl List {
-    pub fn run(&self) -> Result<String> {
+impl super::RadSubCmdRunnable for List {
+    fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir().with_context(|| "fail to list aliases")?;
         let aliases = Aliases::open(aliases_dir).with_context(|| "fail to list aliases")?;
 

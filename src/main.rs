@@ -1,5 +1,7 @@
 mod config;
 mod error;
+#[cfg(test)]
+mod fixture;
 mod subcommand;
 mod utils;
 
@@ -7,6 +9,7 @@ use crate::error::SilentExit;
 use anyhow::Result;
 use std::process;
 use structopt::StructOpt;
+use subcommand::RadSubCmdRunnable;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "rualdi", about = "Rust Aliasing Directory.")]

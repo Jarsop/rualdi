@@ -10,8 +10,8 @@ pub struct Remove {
     pub alias: Vec<String>,
 }
 
-impl Remove {
-    pub fn run(&self) -> Result<String> {
+impl super::RadSubCmdRunnable for Remove {
+    fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir().with_context(|| "fail to remove alias")?;
         let mut aliases = Aliases::open(aliases_dir).with_context(|| "fail to remove alias")?;
 

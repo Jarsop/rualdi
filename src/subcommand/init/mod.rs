@@ -19,8 +19,8 @@ pub struct Init {
     cmd: String,
 }
 
-impl Init {
-    pub fn run(&self) -> Result<String> {
+impl super::RadSubCmdRunnable for Init {
+    fn run(&self) -> Result<String> {
         let stdout = io::stdout();
         let mut handle = stdout.lock();
 
