@@ -1,7 +1,12 @@
 mod bash;
 mod zsh;
 
+#[cfg(test)]
+use crate::fixture;
+use crate::subcommand::RadSubCmdRunnable;
 use anyhow::{Context, Result};
+#[cfg(test)]
+use serial_test::serial;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
@@ -19,7 +24,7 @@ pub struct Init {
     cmd: String,
 }
 
-impl super::RadSubCmdRunnable for Init {
+impl RadSubCmdRunnable for Init {
     fn run(&self) -> Result<String> {
         let stdout = io::stdout();
         let mut handle = stdout.lock();
@@ -39,5 +44,32 @@ arg_enum! {
     enum Shell {
         bash,
         zsh,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[serial]
+    fn zsh() {
+        let subcmd = fixture::create_subcmd(Init {
+            shell: Shell::zsh,
+            cmd: String::from("rad"),
+        });
+        let res = subcmd.run();
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    #[serial]
+    fn bash() {
+        let subcmd = fixture::create_subcmd(Init {
+            shell: Shell::bash,
+            cmd: String::from("rad"),
+        });
+        let res = subcmd.run();
+        assert!(res.is_ok());
     }
 }

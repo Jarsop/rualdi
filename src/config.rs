@@ -1,4 +1,6 @@
 use anyhow::{bail, Context, Result};
+#[cfg(test)]
+use serial_test::serial;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -38,5 +40,38 @@ pub fn rad_resolve_symlinks() -> bool {
     match env::var_os("_RAD_RESOLVE_SYMLINKS") {
         Some(var) => var == "1",
         None => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[serial]
+    fn echo() {
+        assert!(!rad_no_echo());
+    }
+
+    #[test]
+    #[serial]
+    fn no_echo() {
+        std::env::set_var("_RAD_NO_ECHO", "1");
+        assert!(rad_no_echo());
+        std::env::set_var("_RAD_NO_ECHO", "");
+    }
+
+    #[test]
+    #[serial]
+    fn resolve_symlinks() {
+        std::env::set_var("_RAD_RESOLVE_SYMLINKS", "1");
+        assert!(rad_resolve_symlinks());
+        std::env::set_var("_RAD_RESOLVE_SYMLINKS", "0");
+    }
+
+    #[test]
+    #[serial]
+    fn no_resolve_symlinks() {
+        assert!(!rad_resolve_symlinks());
     }
 }

@@ -41,7 +41,7 @@ impl RadSubCmdRunnable for Add {
 }
 
 #[cfg(test)]
-mod tests_add {
+mod tests {
     use super::*;
 
     #[test]
