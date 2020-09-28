@@ -335,7 +335,7 @@ dependencies = [
 
 [[package]]
 name = "rualdi"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
  "dirs 3.0.1",
