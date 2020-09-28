@@ -14,7 +14,7 @@ jobs:
 
 script:
   - cargo build --verbose
-  - cargo test --verbose
+  - cargo test --verbose -- --test-threads=1
   - cd rualdlib && cargo build --verbose --target-dir ../target && cargo test --verbose --target-dir ../target && cd ..
 
 cache: cargo
