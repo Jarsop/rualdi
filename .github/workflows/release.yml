@@ -12,6 +12,7 @@ jobs:
     outputs:
       rualdlib_local_version: ${{ steps.rualdlib_local_version.outputs.version }}
       rualdlib_online_version: ${{ steps.rualdlib_online_version.outputs.version }}
+      rualdi_local_version: ${{ steps.rualdi_local_version.outputs.version }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v2
@@ -26,6 +27,11 @@ jobs:
       - name: Setup | Rualdlib online version
         id: rualdlib_online_version
         run: echo "::set-output name=version::$(cargo search rualdlib | sed 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/')"
+
+      - name: Setup | Rualdlib local version
+        id: rualdi_local_version
+        run: echo "::set-output name=version::$(grep -Pzo '\"rualdi\"\nversion.*\n' Cargo.toml | grep -Pzo 'version.*\n' | tr '\0' '\n' | sed 's/.*\([0-9]\.[0-9]\.[0-9]\).*/\1/')"
+
 
   # Build binary for every OS expect Windows
   build_binaries:
@@ -42,16 +48,16 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu.tar.gz
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-gnu.tar.gz
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl.tar.gz
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-musl.tar.gz
           - target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_armv7-unknown-linux-musleabihf.tar.gz
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_armv7-unknown-linux-musleabihf.tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-apple-darwin.tar.gz
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-apple-darwin.tar.gz
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup | Checkout
@@ -136,13 +142,13 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu.deb
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-gnu.deb
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl.deb
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-musl.deb
           - target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_armv7-unknown-linux-musleabihf.deb
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_armv7-unknown-linux-musleabihf.deb
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -153,13 +159,13 @@ jobs:
         if: startsWith(matrix.target, 'x86_64')
         uses: ebbflow-io/cargo-deb-amd64-ubuntu@1.0
         with:
-          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdlib_local_version }} -o ${{ matrix.name }}
+          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdi_local_version }} -o ${{ matrix.name }}
 
       - name: Build | Deb armv7 package
         if: startsWith(matrix.target, 'armv7')
         uses: ebbflow-io/cargo-deb-armv7-debian@1.0
         with:
-          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdlib_local_version }} -o ${{ matrix.name }} --no-strip
+          cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdi_local_version }} -o ${{ matrix.name }} --no-strip
 
       - name: Post Setup | Upload artifacts
         uses: actions/upload-artifact@v2
@@ -180,10 +186,10 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu_fedora.rpm
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-gnu_fedora.rpm
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl_fedora.rpm
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-musl_fedora.rpm
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -214,10 +220,10 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-gnu_opensuseleap.rpm
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-gnu_opensuseleap.rpm
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: rualdi-${{ needs.version.outputs.rualdlib_local_version }}_x86_64-unknown-linux-musl_opensuseleap.rpm
+            name: rualdi-${{ needs.version.outputs.rualdi_local_version }}_x86_64-unknown-linux-musl_opensuseleap.rpm
 
     runs-on: ${{ matrix.os }}
     steps:
