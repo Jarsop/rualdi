@@ -114,7 +114,7 @@ eval "$(rualdi init zsh)"
 ### Environment variables
 
 - `$_RAD_ALIASES_DIR`: directory where `rualdi` will store its aliases configuration file
-  (default: platform-specific; see the [`dirs` documentation] for more information)
+  (default: platform-specific; see the [`dirs-next` documentation] for more information)
 - `$_RAD_NO_ECHO`: when set to `1`, `rad` will not print the matched directory before navigating to it
 - `$_RAD_RESOLVE_SYMLINKS`: when set to `1`, `rad` will resolve symlinks before print the matched directory.
 
