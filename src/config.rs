@@ -8,7 +8,7 @@ use std::path::PathBuf;
 pub fn rad_aliases_dir() -> Result<PathBuf> {
     let aliases_dir = match env::var_os("_RAD_ALIASES_DIR") {
         Some(data_osstr) => PathBuf::from(data_osstr),
-        None => match dirs::data_local_dir() {
+        None => match dirs_next::data_local_dir() {
             Some(mut aliases_dir) => {
                 aliases_dir.push("rualdi");
                 aliases_dir

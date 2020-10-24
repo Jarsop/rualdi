@@ -118,4 +118,4 @@ eval "$(rualdi init zsh)"
 - `$_RAD_NO_ECHO`: when set to `1`, `rad` will not print the matched directory before navigating to it
 - `$_RAD_RESOLVE_SYMLINKS`: when set to `1`, `rad` will resolve symlinks before print the matched directory.
 
-[`dirs` documentation]: https://docs.rs/dirs/latest/dirs/fn.data_local_dir.html
+[`dirs-next` documentation]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
