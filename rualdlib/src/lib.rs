@@ -27,6 +27,8 @@ use tempfile::{Builder, TempDir};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Aliases {
     pub aliases: Option<BTreeMap<String, String>>,
+    #[serde(rename = "environment")]
+    pub vars: Option<BTreeMap<String, String>>,
     #[serde(skip)]
     modified: bool,
     #[serde(skip)]
@@ -152,6 +154,41 @@ impl Aliases {
         Ok(())
     }
 
+    /// Add environment variable assiociated with an alias configuration file
+    /// to load it in shell environment, raise an error if environment variable
+    /// already exists.
+    pub fn add_env(&mut self, alias: String, var_name: String) -> Result<()> {
+        let mut vars = match self.vars.to_owned() {
+            Some(vars) => vars,
+            _ => {
+                self.modified = true;
+                BTreeMap::new()
+            }
+        };
+
+        if vars.contains_key(&alias) {
+            return Err(anyhow!(
+                "alias '{}' has already a environment variable assiociated",
+                alias
+            ));
+        }
+
+        let values: Vec<String> = vars.values().cloned().collect();
+        if values.contains(&var_name) {
+            return Err(anyhow!(
+                "environment variable '{}' for alias '{}' already exists",
+                var_name,
+                alias
+            ));
+        }
+
+        vars.insert(alias, var_name);
+
+        self.vars = Some(vars);
+        self.modified = true;
+        Ok(())
+    }
+
     /// Remove alias on path in aliase configuration file, raise an error if alias
     /// not exists.
     pub fn remove(&mut self, alias: String) -> Result<()> {
@@ -170,6 +207,32 @@ impl Aliases {
         aliases.remove(&alias);
 
         self.aliases = Some(aliases);
+        self.modified = true;
+        Ok(())
+    }
+
+    /// Remove environment variable associated to an alias
+    /// in aliase configuration file, raise an error if variable
+    /// not exists.
+    pub fn remove_env(&mut self, alias: String) -> Result<()> {
+        let mut vars = match self.vars.to_owned() {
+            Some(vars) => vars,
+            _ => {
+                self.modified = true;
+                BTreeMap::new()
+            }
+        };
+
+        if !vars.contains_key(&alias) {
+            return Err(anyhow!(
+                "no such environment variable for alias '{}'",
+                alias
+            ));
+        }
+
+        vars.remove(&alias);
+
+        self.aliases = Some(vars);
         self.modified = true;
         Ok(())
     }
@@ -213,6 +276,23 @@ impl Aliases {
             None
         }
     }
+
+    /// Search environment variable associated to alias in
+    /// rualdi aliases configuration file,
+    /// return None if variable not found
+    pub fn get_env(&self, alias: &str) -> Result<String> {
+        if let Some(vars) = &self.vars {
+            if vars.is_empty() {
+                Err(anyhow!(format!("no variable for alias '{}'", alias)))
+            } else if let Some(var) = vars.get(alias) {
+                Ok(var.to_owned())
+            } else {
+                Err(anyhow!(format!("no variable for alias '{}'", alias)))
+            }
+        } else {
+            Err(anyhow!(format!("no variable for alias '{}'", alias)))
+        }
+    }
 }
 
 impl Drop for Aliases {
@@ -234,6 +314,23 @@ impl MockAliases {
         aliases.insert("Home".into(), "~".into());
         Aliases {
             aliases: Some(aliases),
+            vars: None,
+            modified: false,
+            aliases_file: PathBuf::new(),
+        }
+    }
+
+    pub fn open_with_env() -> Aliases {
+        let mut aliases: BTreeMap<String, String> = BTreeMap::new();
+        aliases.insert("test".into(), "/test/haha".into());
+        aliases.insert("Home".into(), "~".into());
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
+        vars.insert("test".into(), "TEST".into());
+
+        Aliases {
+            aliases: Some(aliases),
+            vars: Some(vars),
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -241,8 +338,10 @@ impl MockAliases {
 
     pub fn open_no_aliases() -> Aliases {
         let aliases: BTreeMap<String, String> = BTreeMap::new();
+        let vars: BTreeMap<String, String> = BTreeMap::new();
         Aliases {
             aliases: Some(aliases),
+            vars: Some(vars),
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -251,6 +350,7 @@ impl MockAliases {
     pub fn open_empty() -> Aliases {
         Aliases {
             aliases: None,
+            vars: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -436,6 +536,118 @@ mod tests_remove {
 }
 
 #[cfg(test)]
+mod tests_get_env {
+    use super::*;
+
+    #[test]
+    fn existing() {
+        let alias = "test";
+        let aliases = MockAliases::open_with_env();
+        let ret = aliases.get_env(alias);
+        assert!(ret.is_ok());
+        assert_eq!(ret.unwrap(), String::from("TEST"));
+    }
+
+    #[test]
+    fn not_existing() {
+        let alias = "NOPE";
+        let aliases = MockAliases::open_with_env();
+        let ret = aliases.get_env(alias);
+        assert!(ret.is_err());
+    }
+
+    #[test]
+    fn from_no_env() {
+        let alias = "should_fail";
+        let aliases = MockAliases::open_no_aliases();
+        let ret = aliases.get_env(alias);
+        assert!(ret.is_err());
+    }
+
+    #[test]
+    fn from_empty_env() {
+        let alias = "should_fail";
+        let aliases = MockAliases::open_empty();
+        let ret = aliases.get_env(alias);
+        assert!(ret.is_err());
+    }
+}
+
+#[cfg(test)]
+mod tests_add_env {
+    use super::*;
+
+    #[test]
+    fn not_existing_var() {
+        let mut aliases = MockAliases::open();
+        let alias = String::from("Home");
+        let var = String::from("MY_HOME");
+        let mut expected_vars: BTreeMap<String, String> = BTreeMap::new();
+
+        expected_vars.insert(alias.to_owned(), var.to_owned());
+
+        let res = aliases.add_env(alias, var);
+        assert!(res.is_ok());
+        assert_eq!(aliases.vars, Some(expected_vars));
+    }
+
+    #[test]
+    fn existing_var() {
+        let mut aliases = MockAliases::open_with_env();
+        let alias = String::from("test1");
+        let var = String::from("TEST");
+        let res = aliases.add_env(alias, var);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn existing_alias() {
+        let mut aliases = MockAliases::open_with_env();
+        let alias = String::from("test");
+        let var = String::from("TEST1");
+        let res = aliases.add_env(alias, var);
+        assert!(res.is_err());
+    }
+}
+
+#[cfg(test)]
+mod tests_remove_env {
+    use super::*;
+
+    #[test]
+    fn existing() {
+        let alias = String::from("test");
+        let mut aliases = MockAliases::open_with_env();
+        let res = aliases.remove_env(alias);
+        assert!(res.is_ok());
+    }
+
+    #[test]
+    fn not_existing() {
+        let alias = String::from("not_exsting");
+        let mut aliases = MockAliases::open_with_env();
+        let res = aliases.remove_env(alias);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn from_empty_env() {
+        let alias = String::from("not_exsting");
+        let mut aliases = MockAliases::open_empty();
+        let res = aliases.remove_env(alias);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn from_none_env() {
+        let alias = String::from("not_exsting");
+        let mut aliases = MockAliases::open_no_aliases();
+        let res = aliases.remove_env(alias);
+        assert!(res.is_err());
+    }
+}
+
+#[cfg(test)]
 mod tests_list {
     use super::*;
 
@@ -553,6 +765,23 @@ mod test_save {
         aliases.add(alias, path)?;
         let saved = aliases.save();
         assert!(saved.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn should_not_opened() -> Result<()> {
+        let aliases_file = TmpConfig::create_dir()?
+            .with_base()?
+            .with_content(r#"test = "/test/haha""#)?
+            .with_content(r#"Home = "~""#)?;
+
+        let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
+        assert!(aliases.is_ok());
+        let mut aliases = aliases.unwrap();
+        aliases.aliases_file = Path::new("/not/existing/path").to_path_buf();
+        aliases.modified = true;
+        let saved = aliases.save();
+        assert!(saved.is_err());
         Ok(())
     }
 }
