@@ -71,7 +71,7 @@ impl Aliases {
         let path = Self::get_path(&aliases_dir);
 
         if !aliases_dir.is_file() {
-            let default_file = "# Rualdi aliases configuration file\n[aliases]\n";
+            let default_file = "# Rualdi aliases configuration file\n# DO NOT EDIT\n[aliases]\n";
             let mut aliases_file: fs::File = fs::OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -116,7 +116,7 @@ impl Aliases {
                 })?;
 
             let mut content = String::new();
-            content.push_str("# Rualdi aliases configuration file\n");
+            content.push_str("# Rualdi aliases configuration file\n# DO NOT EDIT\n");
 
             let data = toml::to_string(&self).with_context(|| "fail to encode aliases in toml")?;
             content.push_str(data.as_str());
@@ -247,6 +247,14 @@ impl Aliases {
                 let mut res = String::from("Aliases:\n\n");
                 for (alias, path) in aliases.iter() {
                     res.push_str(format!("\t'{}' => '{}'\n", alias, path).as_str());
+                }
+                if let Some(vars) = &self.vars {
+                    if !vars.is_empty() {
+                        res.push_str("Environment variables:\n\n");
+                        for (alias, var) in vars.iter() {
+                            res.push_str(format!("\t'{}' => '{}'\n", var, alias).as_str());
+                        }
+                    }
                 }
                 Some(res)
             }
@@ -383,7 +391,7 @@ impl TmpConfig {
         self.tmp_file = File::create(file_path)?;
         writeln!(
             self.tmp_file,
-            "# Rualdi aliases configuration file\n[aliases]\n"
+            "# Rualdi aliases configuration file\n# DO NOT EDIT\n[aliases]\n"
         )?;
         Ok(self)
     }
@@ -656,6 +664,15 @@ mod tests_list {
         let aliases = MockAliases::open();
         let output = aliases.list();
         let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\n";
+        assert!(output.is_some());
+        assert_eq!(output.unwrap(), expected_output);
+    }
+
+    #[test]
+    fn list_filled_env() {
+        let aliases = MockAliases::open_with_env();
+        let output = aliases.list();
+        let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\nEnvironment variables:\n\n\t'TEST' => 'test'\n";
         assert!(output.is_some());
         assert_eq!(output.unwrap(), expected_output);
     }
