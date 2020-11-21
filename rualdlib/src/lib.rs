@@ -81,6 +81,7 @@ impl Aliases {
             aliases_file
                 .write_all(default_file.as_bytes())
                 .with_context(|| format!("could not create alias file: '{}'", path.display()))?;
+            aliases_file.flush()?;
         }
         let mut aliases_file = fs::File::open(&path)
             .with_context(|| format!("could not open alias file: '{}'", path.display()))?;
@@ -114,6 +115,7 @@ impl Aliases {
                         &self.aliases_file.display()
                     )
                 })?;
+            aliases_file.sync_data()?;
 
             let mut content = String::new();
             content.push_str("# Rualdi aliases configuration file\n# DO NOT EDIT\n");
@@ -128,6 +130,7 @@ impl Aliases {
                         self.aliases_file.display()
                     )
                 })?;
+            aliases_file.sync_all()?;
             Ok(())
         }
     }
