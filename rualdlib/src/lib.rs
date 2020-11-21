@@ -266,6 +266,24 @@ impl Aliases {
         }
     }
 
+    /// Get a String conaining aliases/vars
+    /// found in configuration file
+    pub fn list_env(&self) -> String {
+        let mut vars_found = String::new();
+        if let Some(vars) = &self.vars {
+            if vars.is_empty() {
+                vars_found
+            } else {
+                for (alias, var) in vars.iter() {
+                    vars_found.push_str(format!("{} {}\n", alias, var).as_str());
+                }
+                vars_found
+            }
+        } else {
+            vars_found
+        }
+    }
+
     /// Get rualdi configuration path with rualdi configuration
     /// file name concatenate
     fn get_path<P: AsRef<Path>>(aliases_dir: P) -> PathBuf {
@@ -692,6 +710,34 @@ mod tests_list {
         let aliases = MockAliases::open_no_aliases();
         let output = aliases.list();
         assert!(output.is_none());
+    }
+}
+
+#[cfg(test)]
+mod tests_list_env {
+    use super::*;
+
+    #[test]
+    fn list_filled_var() {
+        let aliases = MockAliases::open_with_env();
+        let output = aliases.list_env();
+        let expected_output = "test TEST\n";
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn list_filled_vars() {
+        let aliases = MockAliases::open_with_vars();
+        let output = aliases.list_env();
+        let expected_output = "test TEST\ntest2 TEST2\n";
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn list_empty() {
+        let aliases = MockAliases::open_empty();
+        let output = aliases.list_env();
+        assert_eq!(output, "");
     }
 }
 
