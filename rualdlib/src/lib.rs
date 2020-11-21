@@ -70,8 +70,8 @@ impl Aliases {
 
         let path = Self::get_path(&aliases_dir);
 
-        if !aliases_dir.is_file() {
-            let default_file = "# Rualdi aliases configuration file\n# DO NOT EDIT\n[aliases]\n";
+        if !path.is_file() {
+            let default_file = "# Rualdi aliases configuration file\n# DO NOT EDIT\n";
             let mut aliases_file: fs::File = fs::OpenOptions::new()
                 .write(true)
                 .create(true)
