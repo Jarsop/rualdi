@@ -235,7 +235,7 @@ impl Aliases {
 
         vars.remove(&alias);
 
-        self.aliases = Some(vars);
+        self.vars = Some(vars);
         self.modified = true;
         Ok(())
     }
@@ -253,7 +253,7 @@ impl Aliases {
                 }
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
-                        res.push_str("Environment variables:\n\n");
+                        res.push_str("\nEnvironment variables:\n\n");
                         for (alias, var) in vars.iter() {
                             res.push_str(format!("\t'{}' => '{}'\n", var, alias).as_str());
                         }
@@ -675,7 +675,7 @@ mod tests_list {
     fn list_filled_env() {
         let aliases = MockAliases::open_with_env();
         let output = aliases.list();
-        let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\nEnvironment variables:\n\n\t'TEST' => 'test'\n";
+        let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\n\nEnvironment variables:\n\n\t'TEST' => 'test'\n";
         assert!(output.is_some());
         assert_eq!(output.unwrap(), expected_output);
     }
