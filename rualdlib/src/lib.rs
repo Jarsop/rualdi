@@ -365,6 +365,24 @@ impl MockAliases {
         }
     }
 
+    pub fn open_with_vars() -> Aliases {
+        let mut aliases: BTreeMap<String, String> = BTreeMap::new();
+        aliases.insert("test".into(), "/test/haha".into());
+        aliases.insert("test2".into(), "/test2/haha".into());
+        aliases.insert("Home".into(), "~".into());
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
+        vars.insert("test".into(), "TEST".into());
+        vars.insert("test2".into(), "TEST2".into());
+
+        Aliases {
+            aliases: Some(aliases),
+            vars: Some(vars),
+            modified: false,
+            aliases_file: PathBuf::new(),
+        }
+    }
+
     pub fn open_no_aliases() -> Aliases {
         let aliases: BTreeMap<String, String> = BTreeMap::new();
         let vars: BTreeMap<String, String> = BTreeMap::new();
@@ -412,13 +430,14 @@ impl TmpConfig {
         self.tmp_file = File::create(file_path)?;
         writeln!(
             self.tmp_file,
-            "# Rualdi aliases configuration file\n# DO NOT EDIT\n[aliases]\n"
+            "# Rualdi aliases configuration file\n# DO NOT EDIT\n"
         )?;
         Ok(self)
     }
 
-    pub fn with_content(mut self, content: &str) -> Result<Self> {
-        writeln!(self.tmp_file, "{}", content)?;
+    pub fn with_content(mut self, toml: toml::value::Value) -> Result<Self> {
+        self.tmp_file.write_all(toml.to_string().as_bytes())?;
+        self.tmp_file.flush()?;
         Ok(self)
     }
 }
@@ -749,7 +768,7 @@ mod test_open {
     fn open_config_not_existing() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?;
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
-        let expected_aliases = MockAliases::open_no_aliases();
+        let expected_aliases = MockAliases::open_empty();
         assert!(aliases.is_ok());
         assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
         Ok(())
@@ -760,7 +779,7 @@ mod test_open {
         let aliases_file = TmpConfig::create_dir()?.with_base()?;
 
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
-        let expected_aliases = MockAliases::open_no_aliases();
+        let expected_aliases = MockAliases::open_empty();
         assert!(aliases.is_ok());
         assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
         Ok(())
@@ -770,7 +789,7 @@ mod test_open {
     fn open_config_empty_file() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?.with_empty()?;
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
-        let expected_aliases = MockAliases::open_no_aliases();
+        let expected_aliases = MockAliases::open_empty();
         assert!(aliases.is_ok());
         assert_eq!(aliases.unwrap().aliases, expected_aliases.aliases);
         Ok(())
@@ -780,8 +799,11 @@ mod test_open {
     fn open_config_filled() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?
             .with_base()?
-            .with_content(r#"test = "/test/haha""#)?
-            .with_content(r#"Home = "~""#)?;
+            .with_content(toml::toml![
+                [aliases]
+                test = "/test/haha"
+                Home = "~"
+            ])?;
 
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
         let expected_aliases = MockAliases::open();
@@ -805,8 +827,11 @@ mod test_save {
     fn should_saved() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?
             .with_base()?
-            .with_content(r#"test = "/test/haha""#)?
-            .with_content(r#"Home = "~""#)?;
+            .with_content(toml::toml![
+                [aliases]
+                test = "/test/haha"
+                Home = "~"
+            ])?;
 
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
         assert!(aliases.is_ok());
@@ -819,8 +844,11 @@ mod test_save {
     fn modified_should_saved() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?
             .with_base()?
-            .with_content(r#"test = "/test/haha""#)?
-            .with_content(r#"Home = "~""#)?;
+            .with_content(toml::toml![
+                [aliases]
+                test = "/test/haha"
+                Home = "~"
+            ])?;
 
         let alias = String::from("saved");
         let path = String::from("/saved");
@@ -838,8 +866,11 @@ mod test_save {
     fn should_not_opened() -> Result<()> {
         let aliases_file = TmpConfig::create_dir()?
             .with_base()?
-            .with_content(r#"test = "/test/haha""#)?
-            .with_content(r#"Home = "~""#)?;
+            .with_content(toml::toml![
+                [aliases]
+                test = "/test/haha"
+                Home = "~"
+            ])?;
 
         let aliases = Aliases::open(aliases_file.tmp_dir.path().to_path_buf());
         assert!(aliases.is_ok());
