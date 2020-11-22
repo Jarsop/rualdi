@@ -42,7 +42,10 @@ mod tests {
     #[serial]
     fn alias() {
         let mut subcmd = fixture::create_subcmd(List {});
-        subcmd.use_config(toml::toml![test = "test"]);
+        subcmd.use_config(toml::toml![
+            [aliases]
+            test = "test"
+        ]);
         let res = subcmd.run();
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), "Aliases:\n\n\t'test' => 'test'\n");
@@ -53,6 +56,7 @@ mod tests {
     fn aliases() {
         let mut subcmd = fixture::create_subcmd(List {});
         subcmd.use_config(toml::toml![
+            [aliases]
             test = "test"
             test2 = "test2"
         ]);
@@ -61,6 +65,25 @@ mod tests {
         assert_eq!(
             res.unwrap(),
             "Aliases:\n\n\t'test' => 'test'\n\t'test2' => 'test2'\n"
+        );
+    }
+
+    #[test]
+    #[serial]
+    fn vars() {
+        let mut subcmd = fixture::create_subcmd(List {});
+        subcmd.use_config(toml::toml![
+            [aliases]
+            test = "test"
+            test2 = "test2"
+            [environment]
+            test = "TEST"
+        ]);
+        let res = subcmd.run();
+        assert!(res.is_ok());
+        assert_eq!(
+            res.unwrap(),
+            "Aliases:\n\n\t'test' => 'test'\n\t'test2' => 'test2'\n\nEnvironment variables:\n\n\t'TEST' => 'test'\n"
         );
     }
 }

@@ -14,7 +14,10 @@ fn empty() -> Result<()> {
 #[test]
 fn filled() -> Result<()> {
     let mut rad = common::create_rad("list");
-    rad.use_config(toml::toml!(test = "test"));
+    rad.use_config(toml::toml![
+        [aliases]
+        test = "test"
+    ]);
     let output = rad.cmd.output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
     let expected = String::from("Aliases:\n\n\t'test' => 'test'\n");
