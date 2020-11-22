@@ -81,7 +81,10 @@ mod tests {
         let mut subcmd = fixture::create_subcmd(Resolve {
             path: PathBuf::from_str("test").unwrap(),
         });
-        subcmd.use_config(toml::toml![test = "not-existing-path"]);
+        subcmd.use_config(toml::toml![
+            [aliases]
+            test = "not-existing-path"
+        ]);
         let res = subcmd.run();
         let expected = format!(
             "could not resolve path: {}/not-existing-path",
@@ -127,7 +130,10 @@ mod tests {
         let mut subcmd = fixture::create_subcmd(Resolve {
             path: PathBuf::from_str("home").unwrap(),
         });
-        subcmd.use_config(toml::toml![home = "~"]);
+        subcmd.use_config(toml::toml![
+            [aliases]
+            home = "~"
+        ]);
         let res = subcmd.run();
         let expected = format!("{}\n", home_dir);
         assert!(res.is_ok());

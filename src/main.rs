@@ -21,10 +21,14 @@ struct Rad {
 #[derive(Debug, StructOpt)]
 pub enum RadSubCmd {
     Add(subcommand::Add),
+    AddEnv(subcommand::AddEnv),
     Init(subcommand::Init),
     List(subcommand::List),
+    ListEnv(subcommand::ListEnv),
     Remove(subcommand::Remove),
+    RemoveEnv(subcommand::RemoveEnv),
     Resolve(subcommand::Resolve),
+    ResolveEnv(subcommand::ResolveEnv),
 }
 
 fn rad_main() -> Result<String> {
@@ -32,10 +36,14 @@ fn rad_main() -> Result<String> {
 
     let res = match opt.radsubcmd {
         RadSubCmd::Add(add) => add.run(),
+        RadSubCmd::AddEnv(add_env) => add_env.run(),
         RadSubCmd::Init(init) => init.run(),
         RadSubCmd::List(list) => list.run(),
+        RadSubCmd::ListEnv(list_env) => list_env.run(),
         RadSubCmd::Remove(remove) => remove.run(),
+        RadSubCmd::RemoveEnv(remove_env) => remove_env.run(),
         RadSubCmd::Resolve(resolve) => resolve.run(),
+        RadSubCmd::ResolveEnv(resolve_env) => resolve_env.run(),
     };
 
     if res.is_ok() {

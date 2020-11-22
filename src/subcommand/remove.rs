@@ -24,7 +24,14 @@ impl RadSubCmdRunnable for Remove {
             aliases
                 .remove(alias.to_owned())
                 .with_context(|| format!("fail to remove alias '{}'", alias))?;
-            println!("alias '{}' removed", alias)
+            println!("alias '{}' removed", alias);
+            if let Ok(var) = aliases.get_env(&alias) {
+                aliases.remove_env(alias.to_owned())?;
+                println!(
+                    "environment variable '{}' for alias '{}' removed",
+                    var, alias
+                );
+            }
         }
 
         Ok("".into())
@@ -52,7 +59,10 @@ mod tests {
         let mut subcmd = fixture::create_subcmd(Remove {
             alias: vec![String::from("test")],
         });
-        subcmd.use_config(toml::toml!(test = "test"));
+        subcmd.use_config(toml::toml![
+            [aliases]
+            test = "test"
+        ]);
         let res = subcmd.run();
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), "");
@@ -64,10 +74,11 @@ mod tests {
         let mut subcmd = fixture::create_subcmd(Remove {
             alias: vec![String::from("test"), String::from("test2")],
         });
-        subcmd.use_config(toml::toml!(
+        subcmd.use_config(toml::toml![
+            [aliases]
             test = "test"
             test2 = "test2"
-        ));
+        ]);
         let res = subcmd.run();
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), "");

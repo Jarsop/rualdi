@@ -13,23 +13,22 @@ pub struct TmpConfig {
 impl TmpConfig {
     pub fn create_dir() -> Self {
         let tmp_dir = Builder::new().prefix("test_rualdi").tempdir().unwrap();
-        let file_path = tmp_dir.path().join(".default");
+        let file_path = tmp_dir.path().join("rualdi.toml");
         let tmp_file = fs::File::create(file_path).unwrap();
         TmpConfig { tmp_dir, tmp_file }
     }
 
     pub fn with_base(&mut self) {
-        let file_path = self.tmp_dir.path().join("rualdi.toml");
-        self.tmp_file = fs::File::create(file_path).unwrap();
         writeln!(
             self.tmp_file,
-            "# Rualdi aliases configuration file\n[aliases]\n"
+            "# Rualdi aliases configuration file\n# DO NOT EDIT\n"
         )
         .unwrap();
     }
 
     pub fn with_content(&mut self, toml: toml::value::Value) {
         writeln!(self.tmp_file, "{}", toml.to_string()).unwrap();
+        self.tmp_file.flush().unwrap();
     }
 }
 

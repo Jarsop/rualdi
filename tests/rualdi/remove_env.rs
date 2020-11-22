@@ -2,15 +2,15 @@ use crate::common;
 use anyhow::Result;
 
 #[test]
-fn not_existing_alias() -> Result<()> {
-    let mut rad = common::create_rad("remove");
+fn not_existing_var() -> Result<()> {
+    let mut rad = common::create_rad("remove-env");
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stderr).unwrap();
     let expected = String::from(
-        r#"Error: fail to remove alias 'test'
+        r#"Error: fail to remove environment variable for alias 'test'
 
 Caused by:
-    alias 'test' not exists
+    no such environment variable for alias 'test'
 "#,
     );
     assert_eq!(actual, expected);
@@ -18,15 +18,16 @@ Caused by:
 }
 
 #[test]
-fn existing_alias() -> Result<()> {
-    let mut rad = common::create_rad("remove");
+fn existing_var() -> Result<()> {
+    let mut rad = common::create_rad("remove-env");
     rad.use_config(toml::toml![
         [aliases]
         test = "test"
+        [environment]
+        test = "TEST"
     ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    let expected = String::from("alias 'test' removed\n");
-    assert_eq!(actual, expected);
+    assert_eq!(actual, "environment variable for alias 'test' removed\n");
     Ok(())
 }
