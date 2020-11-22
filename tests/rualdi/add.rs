@@ -32,7 +32,10 @@ Caused by:
 #[test]
 fn existing_alias() -> Result<()> {
     let mut rad = common::create_rad("add");
-    rad.use_config(toml::toml!(test = "test"));
+    rad.use_config(toml::toml![
+        [aliases]
+        test = "test"
+    ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stderr).unwrap();
     let expected = String::from(

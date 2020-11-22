@@ -75,7 +75,10 @@ mod tests {
             alias: String::from("test"),
             path: None,
         });
-        subcmd.use_config(toml::toml!(test = "test"));
+        subcmd.use_config(toml::toml![
+            [aliases]
+            test = "test"
+        ]);
         let res = subcmd.run();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "fail to add alias 'test'");
