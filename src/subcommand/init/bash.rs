@@ -33,9 +33,13 @@ __rualdi_cd() {
     let aliases = format!(
         r#"
 alias {cmd}='__rualdi_rad'
+alias {cmd}x='__rualdi_radx'
+alias {cmd}xn='__rualdi_radxn'
 alias {cmd}a='__rualdi_rada'
+alias {cmd}ax='__rualdi_radax'
 alias {cmd}l='__rualdi_radl'
-alias {cmd}r='__rualdi_radr'"#,
+alias {cmd}r='__rualdi_radr'
+alias {cmd}xr='__rualdi_radxr'"#,
         cmd = options.cmd
     );
 
@@ -70,16 +74,58 @@ __rualdi_rad() {{
 }}
 # Add a new alias to the rualdi aliases configuration file.
 __rualdi_rada() {{
-    rualdi add "$@"
+    rualdi add -- "$@"
+}}
+# Add a new alias environment variable to the current environment and fill rualdi aliases configuration file.
+__rualdi_radx() {{
+    local __rualdi_alias=$1 __rualdi_var
+    rualdi add-env -- "$@" && \
+    __rualdi_var="$(rualdi resolve-env -- $__rualdi_alias)" && \
+    export RAD_$__rualdi_var="$(rualdi resolve -- "$__rualdi_alias")" && \
+    echo "Environment variable 'RAD_$__rualdi_var' added to current environment"
+}}
+# Add a new alias environment variable to the current environment without filling rualdi aliases configuration file.
+__rualdi_radxn() {{
+    local __rualdi_alias=$1 __rualdi_var=$2
+    test "$__rualdi_var" && __rualdi_var=${{__rualdi_var^^}} || __rualdi_var=${{__rualdi_alias^^}}
+    export RAD_$__rualdi_var="$(rualdi resolve -- "$__rualdi_alias")" && \
+    echo "Environment variable 'RAD_$__rualdi_var' added to current environment without filling rualdi alias configuration file"
+}}
+# Add a new alias to the rualdi aliases configuration file with environment variable associated.
+__rualdi_radax() {{
+    local __rualdi_alias=$1 __rualdi_path=$2 __rualdi_var=$3 __rualdi_get
+    rualdi add -- $__rualdi_alias $__rualdi_path && \
+    rualdi add-env -- $__rualdi_alias $__rualdi_var && \
+    __rualdi_get="$(rualdi resolve-env -- $__rualdi_alias)" && \
+    export RAD_$__rualdi_get=$(rualdi resolve -- $__rualdi_alias)
 }}
 # Remove an alias to the rualdi aliases configuration file.
 __rualdi_radr() {{
-    rualdi remove "$@"
+    rualdi remove -- "$@"
 }}
-# List alias to the rualdi aliases configuration file.
+# Remove an alias environment variable to the rualdi aliases configuration file.
+__rualdi_radxr() {{
+    rualdi remove-env -- "$@"
+}}
+
+# List aliases and alias environment variables to the rualdi aliases configuration file.
 __rualdi_radl() {{
     rualdi list
 }}
+# =============================================================================
+#
+# Restore environment variables
+OLDIFS="$IFS"
+IFS=$'\n'
+for line in $(rualdi list-env); do
+    local __rualdi_alias __rualdi_path __rualdi__var
+    __rualdi_alias=$(echo $line | cut -d' ' -f1)
+    __rualdi_var=$(echo $line | cut -d' ' -f2)
+    __rualdi_path=$(rualdi resolve -- $__rualdi_alias)
+    export RAD_${{__rualdi_var^^}}="$__rualdi_path"
+done
+IFS="$OLDIFS"
+unset OLDIFS
 # =============================================================================
 #
 # Convenient aliases for rualdi.
@@ -87,10 +133,10 @@ __rualdi_radl() {{
 {aliases}
 # =============================================================================
 #
-# To initialize rualdi with zsh, add the following line to your zsh
-# configuration file (usually ~/.zshrc):
+# To initialize rualdi with bash, add the following line to your bash
+# configuration file (usually ~/.bashrc):
 #
-# eval "$(rualdi init zsh)"
+# eval "$(rualdi init bash)"
 "#,
         __rualdi_pwd = __rualdi_pwd,
         __rualdi_cd = __rualdi_cd,

@@ -6,6 +6,8 @@ use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
 use anyhow::{Context, Result};
 #[cfg(test)]
+use gag::Gag;
+#[cfg(test)]
 use serial_test::serial;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
@@ -58,6 +60,7 @@ mod tests {
             shell: Shell::zsh,
             cmd: String::from("rad"),
         });
+        let _print_gag = Gag::stdout().unwrap();
         let res = subcmd.run();
         assert!(res.is_ok());
     }
@@ -69,6 +72,7 @@ mod tests {
             shell: Shell::bash,
             cmd: String::from("rad"),
         });
+        let _print_gag = Gag::stdout().unwrap();
         let res = subcmd.run();
         assert!(res.is_ok());
     }
