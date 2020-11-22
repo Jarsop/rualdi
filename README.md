@@ -29,6 +29,8 @@ Rust Aliasing Directory
 
 Rualdi allows you to create aliases on directories and to provide
 an encapsulation of the built-in `cd` command function for easy change of working directory.
+You can also add environment variable which points on an alias.
+All variables sourced in your environment are prefixed by `RAD_`.
 
 Inspired by [`zoxide`](https://github.com/ajeetdsouza/zoxide) code.
 
@@ -38,13 +40,33 @@ rada workdir                     # Add current directory with workdir as alias
 rada www /var/www                # Add /var/www directory with www as alias
 rada stuff ~/stuff               # Works with home tild alias
 
+radax workdir                    # Add current directory with workdir as alias
+                                 # and add environment variable named RAD_WORKDIR
+                                 # in current environment and in configuration file
+radax workdir . wd               # Add current directory with workdir as alias
+                                 # and add environment variable named RAD_WD
+                                 # in current environment and to the configuration file
+
+radx workdir wd                  # Add environment variable named RAD_WD which points
+                                 # on alias workdir in current environment
+                                 # and to the configuration file
+radx workdir                     # Add environment variable named RAD_WORKDIR
+                                 # which points on alias workdir in current environment
+                                 # and to the configuration file
+
+radxn workdir wd                 # Add environment variable named RAD_WD which points
+                                 # on alias workdir in current environment
+                                 # without adding it to the configuration file
+
 rad www/some-site                # Perform cd in /var/www/some-site
 rad -                            # Go back to previous directory as cd do it
 
-radr workdir                     # Remove workdir alias
+radr workdir                     # Remove workdir alias and environment variable associated if exists
 radr www stuff                   # Works with multiple aliases at same time
 
-radl                             # List aliases
+radxr workdir                    # Remove environment variable which points on alias workdir
+
+radl                             # List aliases and environment variables
 ```
 
 ## Getting started
