@@ -8,7 +8,7 @@ use rualdlib::Aliases;
 use serial_test::serial;
 use structopt::StructOpt;
 
-/// Add new environment variable for an alias
+/// Remove environment variable for a provided alias
 #[derive(Debug, StructOpt)]
 pub struct RemoveEnv {
     /// Alias for which to remove the environment variable

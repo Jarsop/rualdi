@@ -8,7 +8,7 @@ use rualdlib::Aliases;
 use serial_test::serial;
 use structopt::StructOpt;
 
-/// Add new path alias
+/// Print environment variables in format <alias var>
 #[derive(Debug, StructOpt)]
 pub struct ListEnv {}
 
