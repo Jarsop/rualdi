@@ -163,6 +163,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gag"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cc0b9f53275dc5fada808f1d2f82e3688a6c14d735633d1590b7be8eb2307b5"
+dependencies = [
+ "libc",
+ "tempfile",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,6 +367,7 @@ version = "0.1.6"
 dependencies = [
  "anyhow",
  "dirs-next",
+ "gag",
  "rualdlib",
  "serial_test",
  "structopt",
@@ -366,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "rualdlib"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "serde",
