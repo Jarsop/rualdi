@@ -10,20 +10,30 @@
 [![Crates.io](https://img.shields.io/crates/l/rualdi/0.1.4)](https://crates.io/crates/rualdi)
 [![Codecov](https://img.shields.io/codecov/c/github/Jarsop/rualdi)](https://codecov.io/gh/Jarsop/rualdi)
 
+The fork is adding color to the output when listing the aliases and environment variables, as well as creating a `HashMap` that will shorten directory names based off of common environment variables.
+
 Rust Aliasing Directory
 
-## Table of contents
+# Table of Contents
 
-- [Introduction](#introduction)
-- [Examples](#examples)
-- [Getting started](#getting-started)
-  - [Installing `rualdi`](#step-1-installing-rualdi)
-  - [Adding `rualdi` to your shell](#step-3-adding-rualdi-to-your-shell)
-    - [bash](#bash)
-    - [zsh](#zsh)
-- [Configuration](#configuration)
-  - [`init` flags](#init-flags)
-  - [Environment variables](#environment-variables)
+- [Rualdi](#rualdi)
+- [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Examples](#examples)
+  - [Getting started](#getting-started)
+    - [Step 1: Installing `rualdi`](#step-1-installing-rualdi)
+      - [From Cargo registry](#from-cargo-registry)
+      - [From source](#from-source)
+      - [On Debian](#on-debian)
+        - [From source](#from-source-1)
+        - [From .deb prebuilt released](#from-deb-prebuilt-released)
+      - [Other (via precompiled binary)](#other-via-precompiled-binary-)
+    - [Step 2: Adding `rualdi` to your shell](#step-2-adding-rualdi-to-your-shell)
+      - [bash](#bash)
+      - [zsh](#zsh)
+  - [Configuration](#configuration)
+    - [`init` flags](#init-flags)
+    - [Environment variables](#environment-variables)
 
 ## Introduction
 

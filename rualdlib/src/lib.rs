@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
 use std::collections::BTreeMap;
-use std::fs;
+use std::{fs, env};
 #[cfg(test)]
 use std::fs::File;
 use std::io::prelude::*;
@@ -13,6 +13,9 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 #[cfg(test)]
 use tempfile::{Builder, TempDir};
+use colored::*;
+use regex::Regex;
+use std::collections::HashMap;
 
 /// Contain aliases and assiociated path
 /// ```
@@ -247,15 +250,47 @@ impl Aliases {
             if aliases.is_empty() {
                 None
             } else {
-                let mut res = String::from("Aliases:\n\n");
+                // TODO: figure out how to use backreferences
+                let mut alias_hash = HashMap::new();
+                alias_hash.insert(env::var("XDG_CONFIG_HOME").unwrap_or("".to_string()), "%CONFIG".to_string());
+                alias_hash.insert(env::var("XDG_DATA_HOME").unwrap_or("".to_string()), "%LOCAL".to_string());
+
+                let mut reg = Vec::new();
+                for (k, _) in alias_hash.iter() {
+                    reg.push(k.to_string());
+                }
+                let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
+
+                let w = term_size::dimensions().unwrap_or((80, 0)).0;
+                let mut res = String::new();
+
+                res.push_str(format!("{: ^width$} ",
+                        "ALIASES".red().bold(),
+                        width = w - 1).as_str()
+                    );
+                res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
+
                 for (alias, path) in aliases.iter() {
-                    res.push_str(format!("\t'{}' => '{}'\n", alias, path).as_str());
+                    res.push_str(format!("\t'{}' {} '{}'\n",
+                            alias.yellow(),
+                            "=>".cyan(),
+                            path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
+                        .as_str()
+                        );
                 }
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
-                        res.push_str("\nEnvironment variables:\n\n");
+                    res.push_str(format!("{: ^width$} ",
+                            "ENVIRONMENT VARIABLES".red().bold(),
+                            width = w - 1).as_str()
+                        );
+                    res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
                         for (alias, var) in vars.iter() {
-                            res.push_str(format!("\t'{}' => '{}'\n", var, alias).as_str());
+                            res.push_str(format!("\t'{}' {} '{}'\n",
+                                    var.yellow(),
+                                    "=>".cyan(),
+                                    alias.magenta()).as_str()
+                                );
                         }
                     }
                 }

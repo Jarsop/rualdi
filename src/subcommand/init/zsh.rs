@@ -6,26 +6,32 @@ use std::io::Write;
 
 pub fn run<W: Write>(writer: &mut W, options: &Init) -> Result<()> {
     let __rualdi_pwd = if config::rad_resolve_symlinks() {
-        "
+        r#"
 __rualdi_pwd() {
-    pwd -P
-}"
+    local cpwd
+    cpwd=$(builtin pwd -P)
+    # (D) will replace expanded $HOME with ~
+    builtin print -Pr "%F{11}====%f %F{14}%B${(D)cpwd}%f%b %F{11}=====%f"
+}"#
     } else {
-        "
+        r#"
 __rualdi_pwd() {
-    pwd -L
-}"
+    local cpwd
+    cpwd=$(builtin pwd -L)
+    # (D) will replace expanded $HOME with ~
+    builtin print -Pr "%F{11}====%f %F{14}%B${(D)cpwd}%f%b %F{11}=====%f"
+}"#
     };
 
     let __rualdi_cd = if config::rad_no_echo() {
         r#"
 __rualdi_cd() {
-    cd "$@" || return "$?"
+    builtin cd "$@" || return "$?"
 }"#
     } else {
         r#"
 __rualdi_cd() {
-    cd "$@" || return "$?"
+    builtin cd "$@" || return "$?"
     __rualdi_pwd
 }"#
     };
