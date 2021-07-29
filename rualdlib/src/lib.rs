@@ -259,7 +259,6 @@ impl Aliases {
                 for (k, _) in alias_hash.iter() {
                     reg.push(k.to_string());
                 }
-                // let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
 
                 let w = term_size::dimensions().unwrap_or((80, 0)).0;
                 let mut res = String::new();
@@ -270,28 +269,42 @@ impl Aliases {
                     );
                 res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
 
+                let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
+                // path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
+                // FIX: scope issue
                 for (alias, path) in aliases.iter() {
+                    if re.is_match(path) {
+                        let cap = re.captures(path).unwrap();
+                        let out = cap.get(1).map_or("", |m| m.as_str());
+                        let new_path = re.replace(path, alias_hash.get(out).unwrap());
+                    } else {
+                        let new_path = path;
+                    }
                     res.push_str(format!("\t'{}' {} '{}'\n",
                             alias.yellow(),
                             "=>".bright_cyan(),
                             path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
                         .as_str()
                         );
+                    // new_path.to_string())
                 }
+
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
-                    res.push_str(format!("{: ^width$} ",
-                            "ENVIRONMENT VARIABLES".red().bold(),
-                            width = w - 1)
-                        .as_str()
-                        );
-                    res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
-                        for (alias, var) in vars.iter() {
-                            res.push_str(format!("\t'{}' {} '{}'\n",
-                                    var.yellow(),
-                                    "=>".cyan(),
-                                    alias.magenta()).as_str()
-                                );
+                        res.push_str(format!("{: ^width$} ",
+                                "ENVIRONMENT VARIABLES".red().bold(),
+                                width = w - 1)
+                            .as_str()
+                            );
+
+                        res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
+                            for (alias, var) in vars.iter() {
+                                res.push_str(format!("\t'{}' {} '{}'\n",
+                                        var.yellow(),
+                                        "=>".bright_cyan(),
+                                        alias.magenta())
+                                    .as_str()
+                                    );
                         }
                     }
                 }
