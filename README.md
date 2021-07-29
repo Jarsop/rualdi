@@ -12,12 +12,17 @@
 
 The fork is adding color to the output when listing the aliases and environment variables, as well as creating a `HashMap` that will shorten directory names based off of common environment variables.
 
-Rust Aliasing Directory
+### TODO:
+* Fix tests now after adding colored output
 
-# Table of Contents
+## Rust Aliasing Directory
+
+## Table of Contents
 
 - [Rualdi](#rualdi)
-- [Table of Contents](#table-of-contents)
+    - [TODO:](#todo)
+  - [Rust Aliasing Directory](#rust-aliasing-directory)
+  - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Examples](#examples)
   - [Getting started](#getting-started)

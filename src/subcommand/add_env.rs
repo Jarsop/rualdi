@@ -1,4 +1,5 @@
 use crate::config;
+use crate::ctype_exp;
 #[cfg(test)]
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
@@ -7,6 +8,7 @@ use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
+use colored::*;
 
 /// Add new environment variable for an alias
 #[derive(Debug, StructOpt)]
@@ -23,35 +25,50 @@ impl RadSubCmdRunnable for AddEnv {
 
         let aliases_dir = config::rad_aliases_dir().with_context(|| {
             format!(
-                "fail to add environment variable '{}' for alias '{}'",
-                var, self.alias
+                "Failed to add: [{}] {} for [{}] {}",
+                ctype_exp!("env"),
+                var.red().bold(),
+                ctype_exp!("alias"),
+                self.alias.red().bold()
             )
         })?;
         let mut aliases = Aliases::open(aliases_dir).with_context(|| {
             format!(
-                "fail to add environment variable '{}' for alias '{}'",
-                var, self.alias
+                "Failed to add: [{}] {} for [{}] {}",
+                ctype_exp!("env"),
+                var.red().bold(),
+                ctype_exp!("alias"),
+                self.alias.red().bold()
             )
         })?;
 
         if aliases.get(&self.alias).is_none() {
             return Err(anyhow!(format!(
-                "cannot add environment variable '{}', no such alias '{}'",
-                var, self.alias
+                "[{}] {} doesn't exist. Cannot add [{}] {}",
+                ctype_exp!("alias"),
+                self.alias.red().bold(),
+                ctype_exp!("env"),
+                var.red().bold()
             )));
         }
         aliases
             .add_env(self.alias.to_owned(), var.to_owned())
             .with_context(|| {
                 format!(
-                    "fail to add environment variable '{}' for alias '{}'",
-                    var, self.alias
+                    "Failed to add: [{}] {} for [{}] {}",
+                    ctype_exp!("env"),
+                    var.red().bold(),
+                    ctype_exp!("alias"),
+                    self.alias.red().bold()
                 )
             })?;
 
         Ok(format!(
-            "environment variable '{}' for alias '{}' added\n",
-            var, self.alias
+            "[{}] {} added for [{}] {}",
+            ctype_exp!("env"),
+            var.red().bold(),
+            ctype_exp!("alias"),
+            self.alias.red().bold()
         ))
     }
 }
@@ -69,9 +86,16 @@ mod tests {
         });
         let res = subcmd.run();
         assert!(res.is_err());
+        // "cannot add environment variable 'TEST', no such alias 'test'"
         assert_eq!(
             res.unwrap_err().to_string(),
-            "cannot add environment variable 'TEST', no such alias 'test'"
+                format!(
+                    "[{}] {} doesn't exist. Cannot add [{}] {}",
+                    ctype_exp!("alias"),
+                    "test".to_string().red().bold(),
+                    ctype_exp!("env"),
+                    "TEST".to_string().red().bold()
+                )
         );
     }
 
@@ -84,9 +108,16 @@ mod tests {
         });
         let res = subcmd.run();
         assert!(res.is_err());
+        // "cannot add environment variable 'PROVIDED', no such alias 'test'"
         assert_eq!(
             res.unwrap_err().to_string(),
-            "cannot add environment variable 'PROVIDED', no such alias 'test'"
+                format!(
+                    "[{}] {} doesn't exist. Cannot add [{}] {}",
+                    ctype_exp!("alias"),
+                    "test".to_string().red().bold(),
+                    ctype_exp!("env"),
+                    "PROVIDED".to_string().red().bold()
+                )
         );
     }
 

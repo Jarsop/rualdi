@@ -259,7 +259,7 @@ impl Aliases {
                 for (k, _) in alias_hash.iter() {
                     reg.push(k.to_string());
                 }
-                let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
+                // let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
 
                 let w = term_size::dimensions().unwrap_or((80, 0)).0;
                 let mut res = String::new();
@@ -273,7 +273,7 @@ impl Aliases {
                 for (alias, path) in aliases.iter() {
                     res.push_str(format!("\t'{}' {} '{}'\n",
                             alias.yellow(),
-                            "=>".cyan(),
+                            "=>".bright_cyan(),
                             path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
                         .as_str()
                         );
@@ -282,7 +282,8 @@ impl Aliases {
                     if !vars.is_empty() {
                     res.push_str(format!("{: ^width$} ",
                             "ENVIRONMENT VARIABLES".red().bold(),
-                            width = w - 1).as_str()
+                            width = w - 1)
+                        .as_str()
                         );
                     res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
                         for (alias, var) in vars.iter() {
