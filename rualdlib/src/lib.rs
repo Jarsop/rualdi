@@ -3,19 +3,27 @@
 use anyhow::{anyhow, Context, Result};
 use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
-use std::collections::BTreeMap;
-use std::{fs, env};
+
+use std::{
+    collections::{BTreeMap, HashMap},
+    fs,
+    env,
+    path::{Path, PathBuf},
+    io::prelude::*,
+    borrow::Cow
+};
+
 #[cfg(test)]
-use std::fs::File;
-use std::io::prelude::*;
-#[cfg(test)]
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    io::Write,
+};
+
 #[cfg(test)]
 use tempfile::{Builder, TempDir};
 use colored::*;
-use regex::Regex;
-use std::collections::HashMap;
+use regex::{Regex};
+// Captures
 
 /// Contain aliases and assiociated path
 /// ```
@@ -58,6 +66,22 @@ pub struct Aliases {
 /// # Ok(())
 /// # }
 /// ```
+
+// FIX: Unsure where to place this?
+/// Helper function to get different directories for macOS specifically
+/// Example: `cache_dir()` returns `$HOME/Library/Caches`, when this will return `$HOME/.cache`
+pub fn macos_dirs(dir_func: Option<PathBuf>, joined: &str) -> PathBuf {
+    if env::consts::OS == "macos" {
+        PathBuf::from(env!("HOME")).join(joined)
+    } else {
+        dir_func.unwrap_or(
+            PathBuf::from(format!(
+                    "INVALID_{}_DIR",
+                    joined.to_uppercase()
+                    ))
+            )
+    }
+}
 
 impl Aliases {
     /// Open rualdi aliases file from default aliases directory,
@@ -250,10 +274,156 @@ impl Aliases {
             if aliases.is_empty() {
                 None
             } else {
-                // TODO: figure out how to use backreferences
+
+                // TODO: Maybe switch to some ordered Hash to prevent overlapping
                 let mut alias_hash = HashMap::new();
-                alias_hash.insert(env::var("XDG_CONFIG_HOME").unwrap_or("".to_string()), "%CONFIG".to_string());
-                alias_hash.insert(env::var("XDG_DATA_HOME").unwrap_or("".to_string()), "%LOCAL".to_string());
+
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("vimwiki")
+                        .into_os_string().into_string().unwrap(),
+                    "%WIKI_DIR"
+                );
+
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("Applications")
+                        .into_os_string().into_string().unwrap(),
+                    "%APPLICATIONS"
+                );
+
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("Library")
+                        .into_os_string().into_string().unwrap(),
+                    "%LIBRARY"
+                );
+
+                // TODO: maybe check if path exists here
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("github")
+                        .into_os_string().into_string().unwrap(),
+                    "%GITHUB"
+                );
+                // ^^
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("projects/github")
+                        .into_os_string().into_string().unwrap(),
+                    "%PR_GITHUB"
+                );
+
+                alias_hash.insert(
+                    PathBuf::from(env!("HOME")).join("ghq")
+                        .into_os_string().into_string().unwrap(),
+                    "%GHQ"
+                );
+
+                // TODO: Catch error here
+                alias_hash.insert(
+                    PathBuf::from(env!("ZDOTDIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%ZDOTDIR"
+                );
+
+                // Should match on every system
+                // Also, the INVALID_... is so:
+                    // 1) There is not a duplicate key
+                    // 2) I'm hoping that there is not a path containing that name
+                alias_hash.insert(
+                    dirs::audio_dir().unwrap_or(PathBuf::from(r"INVALID_AUDIO_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%AUDIO_HOME"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::cache_dir(), ".cache")
+                        .into_os_string().into_string().unwrap(),
+                    "%CACHE_HOME"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::config_dir(), ".config")
+                        .into_os_string().into_string().unwrap(),
+                    "%CONFIG_HOME"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::data_dir(), ".local/share")
+                        .into_os_string().into_string().unwrap(),
+                    "%DATA_HOME"
+                );
+
+                alias_hash.insert(
+                    dirs::desktop_dir().unwrap_or(PathBuf::from(r"INVALID_DESKTOP_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%DESKTOP"
+                );
+
+                alias_hash.insert(
+                    dirs::document_dir().unwrap_or(PathBuf::from(r"INVALID_DOCUMENT_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%DOCUMENTS"
+                );
+
+                alias_hash.insert(
+                    dirs::download_dir().unwrap_or(PathBuf::from(r"INVALID_DOWNLOAD_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%DOWNLOADS"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::executable_dir(), ".local/bin")
+                        .into_os_string().into_string().unwrap(),
+                    "%BIN_HOME"
+                );
+
+                alias_hash.insert(
+                    dirs::font_dir().unwrap_or(PathBuf::from(r"INVALID_FONT_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%FONTS"
+                );
+
+                alias_hash.insert(
+                    dirs::picture_dir().unwrap_or(PathBuf::from(r"INVALID_PICTURE_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%PICTURES"
+                );
+
+                alias_hash.insert(
+                    dirs::public_dir().unwrap_or(PathBuf::from(r"INVALID_PUBLIC_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%PUBLIC"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::runtime_dir(), ".local/tmp")
+                        .into_os_string().into_string().unwrap(),
+                    "%RUNTIME_DIR"
+                );
+
+                alias_hash.insert(
+                    macos_dirs(dirs::template_dir(), "Templates")
+                        .into_os_string().into_string().unwrap(),
+                    "%TEMPLATE_DIR"
+                );
+
+                alias_hash.insert(
+                    dirs::video_dir().unwrap_or(PathBuf::from(r"INVALID_VIDEO_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%VIDEO_DIR"
+                );
+
+                alias_hash.insert(
+                    dirs::home_dir().unwrap_or(PathBuf::from(r"INVALID_HOME_DIR"))
+                        .into_os_string().into_string().unwrap(),
+                    "%HOME"
+                );
+
+                // alias_hash.insert(
+                //     env::var("XDG_DATA_HOME").unwrap_or("".to_string()),
+                //     "%LOCAL".to_string()
+                // );
+                // alias_hash.insert(
+                //     env::var("XDG_CONFIG_HOME").unwrap_or("".to_string()),
+                //     "%CONFIG".to_string()
+                // );
 
                 let mut reg = Vec::new();
                 for (k, _) in alias_hash.iter() {
@@ -263,40 +433,46 @@ impl Aliases {
                 let w = term_size::dimensions().unwrap_or((80, 0)).0;
                 let mut res = String::new();
 
-                res.push_str(format!("{: ^width$} ",
+                res.push_str(format!("{}\n{: ^width$}\n{}\n",
+                        "=".repeat(w).green().bold(),
                         "ALIASES".red().bold(),
-                        width = w - 1).as_str()
+                        "=".repeat(w).green().bold(),
+                        width = w - 1)
+                    .as_str()
                     );
-                res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
 
                 let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
                 // path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
-                // FIX: scope issue
                 for (alias, path) in aliases.iter() {
-                    if re.is_match(path) {
+                    let new_path = if re.is_match(path) {
+                        // re.replace(path, |caps: &regex::Captures| {
+                        //     let out = caps.get(1).map_or("", |m| m.as_str());
+                        //     alias_hash.get(out)
+                        // })
+
                         let cap = re.captures(path).unwrap();
                         let out = cap.get(1).map_or("", |m| m.as_str());
-                        let new_path = re.replace(path, alias_hash.get(out).unwrap());
+                        re.replace(path, *alias_hash.get(out).unwrap())
                     } else {
-                        let new_path = path;
-                    }
-                    res.push_str(format!("\t'{}' {} '{}'\n",
+                        Cow::from(path)
+                    };
+                    res.push_str(format!("{:<12} {:<2} {}\n",
                             alias.yellow(),
                             "=>".bright_cyan(),
-                            path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
+                            new_path.magenta())
                         .as_str()
                         );
-                    // new_path.to_string())
                 }
 
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
-                        res.push_str(format!("{: ^width$} ",
+                        res.push_str(format!("{}\n{: ^width$}\n{}\n",
+                                "=".repeat(w).green().bold(),
                                 "ENVIRONMENT VARIABLES".red().bold(),
+                                "=".repeat(w).green().bold(),
                                 width = w - 1)
                             .as_str()
                             );
-
                         res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
                             for (alias, var) in vars.iter() {
                                 res.push_str(format!("\t'{}' {} '{}'\n",
