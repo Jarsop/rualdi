@@ -49,7 +49,7 @@ impl RadSubCmdRunnable for RemoveEnv {
 
         // "environment variable for alias '{}' removed\n",
         Ok(format!(
-            "[{}] Removed for [{}] {}",
+            "[{}] Removed: for [{}] {}",
             ctype_exp!("env"),
             ctype_exp!("alias"),
             self.alias.red().bold()

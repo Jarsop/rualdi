@@ -67,16 +67,9 @@ alias {cmd}rx='__rualdi_radrx'"#,
 setopt extendedglob noshortloops rcexpandparam
 zmodload -Fa zsh/parameter p:commands p:dirstack
 
-local conf
-local -a rualdi_aliases
+typeset -gaH rualdi_aliases
 
-if [[ "$OSTYPE" == darwin* ]] {{
-    conf="${{HOME}}/Library/Application Support/rualdi/rualdi.toml"
-}} else {{
-    conf="${{XDG_CONFIG_HOME}}/rualdi/rualdi.toml"
-}}
-
-rualdi_aliases=( ${{${{(f)"$(rualdi completions-alias)"}}//\"}} )
+rualdi_aliases=( ${{(@f)"$(rualdi list-alias)"}} )
 
 # Error wrapper
 function __rualdi_error() {{ builtin print -Pr "%F{{1}}%BError:%b%f $@"; }}
@@ -112,7 +105,7 @@ function __rualdi_colorize() {{
 # List directories with fzf
 function __rualdi_fzf_list() {{
     # This adds support for file paths with spaces
-    rualdi_aliases=( ${{${{rualdi_aliases// /__}}//__=__/ → }} )
+    rualdi_aliases=( ${{${{rualdi_aliases[@]// /__}}//__=>__/ → }} )
     builtin print -rl -- "$rualdi_aliases[@]" \
         | __rualdi_colorize \
         | column -t
@@ -139,7 +132,7 @@ function __rualdi_fzf {{
         # Wrapper for regular rad [[[
         [[ -n "$argv" ]] && {{
             local -a alias_dirs
-            alias_dirs=( ${{rualdi_aliases[@]//(#m)*/${{(@)${{(@As: = :)${{MATCH}}}}[1]}}}} )
+            alias_dirs=( ${{rualdi_aliases[@]//(#m)*/${{(@)${{(@As: => :)${{MATCH}}}}[1]}}}} )
             # Note: :* checks whether argv is contained in alias_dirs
             [[ -n "${{argv:*alias_dirs}}" ]] && {{
                 __rualdi_cd "$(rualdi resolve -- "$argv")" && return
@@ -152,7 +145,7 @@ function __rualdi_fzf {{
             | __rualdi_fzf_ --query="${{argv:-}}")}}[1]}}
 
         [[ -n "$sel" ]] &&
-          __rualdi_cd "$(rualdi resolve -- "$sel")"
+            __rualdi_cd "$(rualdi resolve -- "$sel")"
     fi
 }}
 
@@ -169,7 +162,8 @@ function __rualdi_rad() {{
         [[ ! -o pushdminus ]] && __rualdi_cd "${{1/-/+}}" || __rualdi_cd "$1"
     else
         local __rualdi_result
-        __rualdi_result="$(rualdi resolve -- "$@")" && __rualdi_cd "$__rualdi_result"
+        __rualdi_result="$(rualdi resolve -- "$@")" &&
+            __rualdi_cd "$__rualdi_result"
     fi
 }}
 

@@ -36,10 +36,10 @@ impl RadSubCmdRunnable for Remove {
             if let Ok(var) = aliases.get_env(&alias) {
                 aliases.remove_env(alias.to_owned())?;
                 println!(
-                    "[{}] {} for [{}] {} removed",
-                    "env".to_string().green().bold(),
+                    "[{}] Removed: {} for [{}] {}",
+                    ctype_exp!("env"),
                     var.red().bold(),
-                    "alias".to_string().green().bold(),
+                    ctype_exp!("alias"),
                     alias.red().bold()
                 );
             }

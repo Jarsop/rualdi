@@ -17,8 +17,10 @@ use subcommand::RadSubCmdRunnable;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "rualdi",
-    about = "Rust Aliasing Directory",
+    name = env!("CARGO_PKG_NAME"),
+    version = env!("CARGO_PKG_VERSION"),
+    author = env!("CARGO_PKG_AUTHORS"),
+    about = env!("CARGO_PKG_DESCRIPTION"),
     global_settings = &[
         AppSettings::ColoredHelp,
         AppSettings::ColorAlways
@@ -39,6 +41,8 @@ pub enum RadSubCmd {
     Init(subcommand::Init),
     #[structopt(alias = "l")]
     List(subcommand::List),
+    #[structopt(alias = "la")]
+    ListAlias(subcommand::ListAlias),
     #[structopt(alias = "lx")]
     ListEnv(subcommand::ListEnv),
     #[structopt(alias = "r")]
@@ -52,19 +56,18 @@ pub enum RadSubCmd {
 
     #[structopt(alias = "comp")]
     Completions(subcommand::Completions),
-    // CompletionsEnv(subcommand::CompletionsEnv),
 }
 
 fn rad_main() -> Result<String> {
     let opt = Rad::from_args();
 
-    // RadSubCmd::CompletionsEnv(completions_env) => completions_env.run(),
     let res = match opt.radsubcmd {
         RadSubCmd::Add(add) => add.run(),
         RadSubCmd::AddEnv(add_env) => add_env.run(),
         RadSubCmd::Completions(completions) => completions.run(),
         RadSubCmd::Init(init) => init.run(),
         RadSubCmd::List(list) => list.run(),
+        RadSubCmd::ListAlias(list_alias) => list_alias.run(),
         RadSubCmd::ListEnv(list_env) => list_env.run(),
         RadSubCmd::Remove(remove) => remove.run(),
         RadSubCmd::RemoveEnv(remove_env) => remove_env.run(),

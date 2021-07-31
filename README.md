@@ -44,6 +44,10 @@ The fork is adding color to the output when listing the aliases and environment 
       - [Recently visited directories](#recently-visited-directories)
       - [`rad` wrapper](#rad-wrapper)
   - [Completions](#completions)
+      - [Installation](#installation)
+  - [Extra](#extra)
+      - [Subcommand Aliases](#subcommand-aliases)
+      - [Documentation for Crates](#documentation-for-crates)
 
 ## Introduction
 
@@ -208,4 +212,40 @@ radf <query>
 As of now, only `zsh` completions are available.
 This works the best with [`fzf-tab`](https://github.com/aloxaf/fzf-tab), which completes your command with `fzf` when using `<TAB>`
 
-[`dirs-next` documentation]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
+#### Installation
+
+This command prints the completions to `stdout`, so it can be redirected to file file and placed in your `fpath`.
+These completions only work with the actual `rualdi` binary, and therefore will not work with the aliases that are set because they are all individual functions.
+
+To get completions for the aliases, move the file `completions/_rualdi_funcs` into your `fpath` as well.
+
+```sh
+rualdi completions shell zsh > _rualdi
+```
+
+## Extra
+
+#### Subcommand Aliases
+
+Another way to use `rualdi` is to set `rualdi` itself to an alias, and use each subcommands' own alias.
+
+For example, in your `.zshrc` or `.bashrc`, place `alias r="rualdi"`. Then use the following aliases:
+
+```sh
+r a    # rualdi add
+r ax   # rualdi add-env
+r i    # rualdi init
+r l    # rualdi list
+r la   # rualdi list-alias
+r lx   # rualdi list-env
+r r    # rualdi remove
+r rx   # rualdi remove-env
+r res  # rualdi resolve
+r resx # rualdi resolve-env
+
+r comp # rualdi completions
+```
+
+#### Documentation for Crates
+
+* [`dirs-next`]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html

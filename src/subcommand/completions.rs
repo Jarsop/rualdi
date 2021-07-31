@@ -7,7 +7,7 @@ use crate::{
 // env,
 // str::FromStr,
 
-use std::io::Cursor;
+use std::{io::Cursor, str::FromStr};
 
 #[cfg(test)]
 use crate::fixture;
@@ -36,12 +36,12 @@ pub struct Completions {
         value_name = "completion_type",
     )]
     comp_type: CompType,
-    /// Shell to be used for completions (can only be used with all)
+    /// Shell to be used for completions (can only be used with shell)
     #[structopt(
-        possible_values = &Shell::variants(),
-        required_if("comp_type", "all"),
+        possible_values = &ShellType::variants(),
+        required_if("comp_type", "shell"),
     )]
-    shell: Option<String>
+    shell: Option<ShellType>
 }
 
 arg_enum! {
@@ -54,6 +54,14 @@ arg_enum! {
     }
 }
 
+arg_enum! {
+    #[allow(non_camel_case_types)]
+    #[derive(Debug)]
+    enum ShellType {
+        zsh,
+        bash
+    }
+}
 
 impl RadSubCmdRunnable for Completions {
     fn run(&self) -> Result<String> {
@@ -81,21 +89,24 @@ impl RadSubCmdRunnable for Completions {
                 "failed to list variables for alias completions")?;
 
         let res = match self.comp_type {
-            CompType::alias => aliases.list_alias_completions().unwrap(),
-            CompType::env => aliases.list_env_completions().unwrap(),
+            CompType::alias => aliases.list_alias_completions().unwrap_or_else(|| "None".into()),
+            CompType::env => aliases.list_env_completions().unwrap_or_else(|| "None".into()),
             CompType::shell => {
                 let mut app = Rad::clap();
 
-                let shell = self.shell
+                // FIX: Send errors up to StructOpt
+                let shell = Shell::from_str(
+                    &self.shell
                     .as_ref()
-                    .unwrap_or(&"Invalid value for shell".to_string())
-                    .parse::<Shell>()
-                    .expect("Invalid value for shell");
+                    .unwrap_or_else(|| &ShellType::zsh)
+                    .to_string())
+                    .unwrap();
 
                 let buffer = Vec::new();
                 let mut cursor = Cursor::new(buffer);
                 app.gen_completions_to(env!("CARGO_PKG_NAME"),
-                    shell, &mut cursor);
+                    shell,
+                    &mut cursor);
                 let buffer = cursor.into_inner();
                 let mut script = String::from_utf8(buffer)
                     .expect("Clap completion not UTF-8");
@@ -105,7 +116,7 @@ impl RadSubCmdRunnable for Completions {
                         for (needle, replacement) in comp_helper::ZSH_COMPLETION_REP {
                             replace(&mut script, needle, replacement)?;
                     },
-                    _ => println!("other"),
+                    _ => println!(),
                 }
 
                 format!("{}", script.trim())

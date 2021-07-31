@@ -499,6 +499,22 @@ impl Aliases {
         }
     }
 
+    pub fn list_alias(&self) -> Option<String> {
+        if let Some(aliases) = &self.aliases {
+            if aliases.is_empty() {
+                None
+            } else {
+                let mut res = String::new();
+                for (alias, path) in aliases.iter() {
+                    res.push_str(format!("{} => {}\n", alias, path).as_str());
+                }
+                Some(res)
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn list_alias_completions(&self) -> Option<String> {
         if let Some(aliases) = &self.aliases {
             if aliases.is_empty() {
