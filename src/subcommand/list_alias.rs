@@ -8,7 +8,7 @@ use rualdlib::Aliases;
 use serial_test::serial;
 use structopt::StructOpt;
 
-/// Print aliases with their path and environment variable associated
+/// Print alias and its associated path (not colored)
 #[derive(Debug, StructOpt)]
 pub struct ListAlias {}
 
