@@ -1,17 +1,20 @@
 //! Module to parse rad config file in TOML format
-
 use anyhow::{anyhow, Context, Result};
 use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
+use terminal_size::terminal_size;
 
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     fs,
     env,
     path::{Path, PathBuf},
     io::prelude::*,
     borrow::Cow
 };
+
+// A hash that keeps its order
+use indexmap::IndexMap;
 
 #[cfg(test)]
 use std::{
@@ -22,8 +25,7 @@ use std::{
 #[cfg(test)]
 use tempfile::{Builder, TempDir};
 use colored::*;
-use regex::{Regex};
-// Captures
+use regex::{Regex, Captures};
 
 /// Contain aliases and assiociated path
 /// ```
@@ -274,9 +276,7 @@ impl Aliases {
             if aliases.is_empty() {
                 None
             } else {
-
-                // TODO: Maybe switch to some ordered Hash to prevent overlapping
-                let mut alias_hash = HashMap::new();
+                let mut alias_hash = IndexMap::new();
 
                 alias_hash.insert(
                     PathBuf::from(env!("HOME")).join("vimwiki")
@@ -327,7 +327,7 @@ impl Aliases {
                     // 1) There is not a duplicate key
                     // 2) I'm hoping that there is not a path containing that name
                 alias_hash.insert(
-                    dirs::audio_dir().unwrap_or(PathBuf::from(r"INVALID_AUDIO_DIR"))
+                    dirs::audio_dir().unwrap_or(PathBuf::from("INVALID_AUDIO_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%AUDIO_HOME"
                 );
@@ -351,19 +351,19 @@ impl Aliases {
                 );
 
                 alias_hash.insert(
-                    dirs::desktop_dir().unwrap_or(PathBuf::from(r"INVALID_DESKTOP_DIR"))
+                    dirs::desktop_dir().unwrap_or(PathBuf::from("INVALID_DESKTOP_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%DESKTOP"
                 );
 
                 alias_hash.insert(
-                    dirs::document_dir().unwrap_or(PathBuf::from(r"INVALID_DOCUMENT_DIR"))
+                    dirs::document_dir().unwrap_or(PathBuf::from("INVALID_DOCUMENT_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%DOCUMENTS"
                 );
 
                 alias_hash.insert(
-                    dirs::download_dir().unwrap_or(PathBuf::from(r"INVALID_DOWNLOAD_DIR"))
+                    dirs::download_dir().unwrap_or(PathBuf::from("INVALID_DOWNLOAD_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%DOWNLOADS"
                 );
@@ -375,19 +375,19 @@ impl Aliases {
                 );
 
                 alias_hash.insert(
-                    dirs::font_dir().unwrap_or(PathBuf::from(r"INVALID_FONT_DIR"))
+                    dirs::font_dir().unwrap_or(PathBuf::from("INVALID_FONT_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%FONTS"
                 );
 
                 alias_hash.insert(
-                    dirs::picture_dir().unwrap_or(PathBuf::from(r"INVALID_PICTURE_DIR"))
+                    dirs::picture_dir().unwrap_or(PathBuf::from("INVALID_PICTURE_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%PICTURES"
                 );
 
                 alias_hash.insert(
-                    dirs::public_dir().unwrap_or(PathBuf::from(r"INVALID_PUBLIC_DIR"))
+                    dirs::public_dir().unwrap_or(PathBuf::from("INVALID_PUBLIC_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%PUBLIC"
                 );
@@ -405,54 +405,39 @@ impl Aliases {
                 );
 
                 alias_hash.insert(
-                    dirs::video_dir().unwrap_or(PathBuf::from(r"INVALID_VIDEO_DIR"))
+                    dirs::video_dir().unwrap_or(PathBuf::from("INVALID_VIDEO_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%VIDEO_DIR"
                 );
 
                 alias_hash.insert(
-                    dirs::home_dir().unwrap_or(PathBuf::from(r"INVALID_HOME_DIR"))
+                    dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
                         .into_os_string().into_string().unwrap(),
                     "%HOME"
                 );
-
-                // alias_hash.insert(
-                //     env::var("XDG_DATA_HOME").unwrap_or("".to_string()),
-                //     "%LOCAL".to_string()
-                // );
-                // alias_hash.insert(
-                //     env::var("XDG_CONFIG_HOME").unwrap_or("".to_string()),
-                //     "%CONFIG".to_string()
-                // );
 
                 let mut reg = Vec::new();
                 for (k, _) in alias_hash.iter() {
                     reg.push(k.to_string());
                 }
 
-                let w = term_size::dimensions().unwrap_or((80, 0)).0;
+                let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(0);
                 let mut res = String::new();
 
                 res.push_str(format!("{}\n{: ^width$}\n{}\n",
-                        "=".repeat(w).green().bold(),
+                        "=".repeat(width).green().bold(),
                         "ALIASES".red().bold(),
-                        "=".repeat(w).green().bold(),
-                        width = w - 1)
+                        "=".repeat(width).green().bold(),
+                        width = width - 1)
                     .as_str()
                     );
 
                 let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
-                // path.replace(&env::var("HOME").unwrap(), "%HOME").magenta())
                 for (alias, path) in aliases.iter() {
                     let new_path = if re.is_match(path) {
-                        // re.replace(path, |caps: &regex::Captures| {
-                        //     let out = caps.get(1).map_or("", |m| m.as_str());
-                        //     alias_hash.get(out)
-                        // })
-
-                        let cap = re.captures(path).unwrap();
-                        let out = cap.get(1).map_or("", |m| m.as_str());
-                        re.replace(path, *alias_hash.get(out).unwrap())
+                        re.replace(path, |caps: &Captures| {
+                            *alias_hash.get(caps.get(1).unwrap().as_str()).unwrap()
+                        })
                     } else {
                         Cow::from(path)
                     };
@@ -467,15 +452,14 @@ impl Aliases {
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
                         res.push_str(format!("{}\n{: ^width$}\n{}\n",
-                                "=".repeat(w).green().bold(),
+                                "=".repeat(width).green().bold(),
                                 "ENVIRONMENT VARIABLES".red().bold(),
-                                "=".repeat(w).green().bold(),
-                                width = w - 1)
+                                "=".repeat(width).green().bold(),
+                                width = width - 1)
                             .as_str()
                             );
-                        res.push_str(format!("{}\n", "=".repeat(w).green().bold()).as_str());
                             for (alias, var) in vars.iter() {
-                                res.push_str(format!("\t'{}' {} '{}'\n",
+                                res.push_str(format!("{:<12} {:<2} {}\n",
                                         var.yellow(),
                                         "=>".bright_cyan(),
                                         alias.magenta())
@@ -500,12 +484,50 @@ impl Aliases {
                 vars_found
             } else {
                 for (alias, var) in vars.iter() {
-                    vars_found.push_str(format!("{} {}\n", alias, var).as_str());
+                    vars_found.push_str(format!(
+                            "{} {} {}\n",
+                            alias.yellow(),
+                            "=>".bright_cyan(),
+                            var.magenta())
+                        .as_str()
+                    );
                 }
                 vars_found
             }
         } else {
             vars_found
+        }
+    }
+
+    pub fn list_alias_completions(&self) -> Option<String> {
+        if let Some(aliases) = &self.aliases {
+            if aliases.is_empty() {
+                None
+            } else {
+                let mut res = String::new();
+                for (alias, _) in aliases.iter() {
+                    res.push_str(format!("{}\n", alias).as_str());
+                }
+                Some(res)
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn list_env_completions(&self) -> Option<String> {
+        if let Some(vars) = &self.vars {
+            if vars.is_empty() {
+                None
+            } else {
+                let mut res = String::new();
+                for (_, var) in vars.iter() {
+                    res.push_str(format!("{}\n", var).as_str());
+                }
+                Some(res)
+            }
+        } else {
+            None
         }
     }
 

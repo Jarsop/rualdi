@@ -18,11 +18,18 @@ use std::io;
 #[derive(Debug, StructOpt)]
 #[structopt()]
 pub struct Init {
-    #[structopt(possible_values = &Shell::variants(), case_insensitive = true)]
+    #[structopt(
+        possible_values = &Shell::variants(),
+        case_insensitive = true)
+    ]
     shell: Shell,
 
     /// Renames the 'rad' command and corresponding aliases
-    #[structopt(long, alias = "rad-cmd", default_value = "rad")]
+    #[structopt(
+        long,
+        alias = "rad-cmd",
+        default_value = "rad")
+    ]
     cmd: String,
 }
 

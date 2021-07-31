@@ -26,7 +26,7 @@ impl RadSubCmdRunnable for RemoveEnv {
                 "[{}] Failed to remove for [{}] {}",
                 ctype_exp!("env"),
                 ctype_exp!("alias"),
-                self.alias
+                self.alias.red().bold()
             )
         })?;
         let mut aliases = Aliases::open(aliases_dir).with_context(|| {
@@ -34,7 +34,7 @@ impl RadSubCmdRunnable for RemoveEnv {
                 "[{}] Failed to remove for [{}] {}",
                 ctype_exp!("env"),
                 ctype_exp!("alias"),
-                self.alias
+                self.alias.red().bold()
             )
         })?;
 
@@ -43,7 +43,7 @@ impl RadSubCmdRunnable for RemoveEnv {
                 "[{}] Failed to remove for [{}] {}",
                 ctype_exp!("env"),
                 ctype_exp!("alias"),
-                self.alias
+                self.alias.red().bold()
             )
         })?;
 
@@ -52,7 +52,7 @@ impl RadSubCmdRunnable for RemoveEnv {
             "[{}] Removed for [{}] {}",
             ctype_exp!("env"),
             ctype_exp!("alias"),
-            self.alias
+            self.alias.red().bold()
         ))
     }
 }
@@ -77,7 +77,12 @@ mod tests {
         assert!(res.is_ok());
         assert_eq!(
             res.unwrap(),
-            "environment variable for alias 'test' removed\n"
+            format!(
+                "[{}] Removed for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 
@@ -91,7 +96,12 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to remove environment variable for alias 'test'"
+            format!(
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 
@@ -110,7 +120,12 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to remove environment variable for alias 'test'"
+            format!(
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 }

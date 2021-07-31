@@ -1,0 +1,58 @@
+#compdef __rualdi_rad __rualdi_radr __rualdi_radx __rualdi_radrx
+
+local -a aliases envs
+local state ret
+
+aliases=( ${(f)"$(rualdi completions alias)"} )
+envs=( ${(f)"$(rualdi completions envs)"} )
+
+case $state in
+  *)
+    _alternative \
+      'aliases:aliases:compadd -a - aliases' \
+      'envs:environments:compadd -a - envs' && \
+          ret=0
+  ;;
+esac
+
+return ret
+
+# (( $+functions[_rualdi_variables] )) ||
+# _rualdi_variables() {
+#     [[ $PREFIX = -* ]] && return 1
+#     integer ret=1
+#     local -a aliases; aliases=(
+#         ${(f)$(_call_program commands rualdi completions alias)}
+#     )
+#     local -a env_vars; env_vas=(
+#         ${(f)$(_call_program commands rualdi completions env)}
+#     )
+#
+#     _alternative \
+#       'aliases:aliases:compadd -a - aliases' \
+#       'env_vars:environments:compadd -a - env_vars' && \
+#           ret=0
+#
+#     return ret
+#
+#     # if compset -P '*='; then
+#     #     case "${${words[-1]%=*}#*=}" in
+#     #         *) _message 'value' && ret=0 ;;
+#     #     esac
+#
+#     # _describe -t aliases 'aliases' aliases -qS "="
+#     # _describe -t env_vars 'environment variables' env_vars "$@"
+# }
+#
+# (( $+functions[_rualdi_aliases] )) ||
+# _rualdi_aliases() {
+#     [[ $PREFIX = -* ]] && return 1
+#     integer ret=1
+#     local -a aliases; aliases=(
+#         ${(f)$(_call_program commands rualdi completions alias)}
+#     )
+#
+#     _describe -t aliases 'aliases' aliases && ret=0
+#
+#     return ret
+# }

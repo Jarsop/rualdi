@@ -1,5 +1,6 @@
 mod add;
 mod add_env;
+mod completions;
 mod init;
 mod list;
 mod list_env;
@@ -10,6 +11,7 @@ mod resolve_env;
 
 pub use add::Add;
 pub use add_env::AddEnv;
+pub use completions::Completions;
 pub use init::Init;
 pub use list::List;
 pub use list_env::ListEnv;

@@ -1,9 +1,12 @@
-use crate::config;
-use crate::ctype_exp;
+use crate::{
+    config,
+    ctype_exp,
+    subcommand::RadSubCmdRunnable,
+    utils
+};
+
 #[cfg(test)]
 use crate::fixture;
-use crate::subcommand::RadSubCmdRunnable;
-use crate::utils;
 use anyhow::{Context, Result};
 use rualdlib::Aliases;
 #[cfg(test)]
@@ -26,17 +29,29 @@ pub struct Add {
 impl RadSubCmdRunnable for Add {
     fn run(&self) -> Result<String> {
         let aliases_dir = config::rad_aliases_dir()
-            .with_context(|| format!("[{}] Failed to add: {}", ctype_exp!("alias"), self.alias.red().bold()))?;
+            .with_context(|| format!("[{}] Failed to add: {}",
+                    ctype_exp!("alias"),
+                    self.alias.red().bold())
+                )?;
         let mut aliases = Aliases::open(aliases_dir)
-            .with_context(|| format!("[{}] Failed to add: {}", ctype_exp!("alias"), self.alias.red().bold()))?;
+            .with_context(|| format!("[{}] Failed to add: {}",
+                    ctype_exp!("alias"),
+                    self.alias.red().bold())
+                )?;
 
         let path = self.path.to_owned().unwrap_or(utils::get_current_dir()?);
         let path = utils::resolve_path(path)
-            .with_context(|| format!("[{}] Failed to add: {}", ctype_exp!("alias"), self.alias.red().bold()))?;
+            .with_context(|| format!("[{}] Failed to add: {}",
+                    ctype_exp!("alias"),
+                    self.alias.red().bold())
+                )?;
 
         aliases
             .add(self.alias.to_owned(), utils::path_to_str(&path)?.into())
-            .with_context(|| format!("[{}] Failed to add: {}", ctype_exp!("alias"), self.alias.red().bold()))?;
+            .with_context(|| format!("[{}] Failed to add: {}",
+                    ctype_exp!("alias"),
+                    self.alias.red().bold())
+                )?;
 
         Ok(format!("[{}] Added: {}\n", ctype_exp!("alias"), self.alias.red().bold()))
     }
