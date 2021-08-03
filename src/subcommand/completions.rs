@@ -69,12 +69,12 @@ impl RadSubCmdRunnable for Completions {
             haystack: &mut String,
             needle: &str,
             replacement: &str
-        ) -> Result<(), anyhow::Error> {
+        ) -> Result<()> {
             if let Some(index) = haystack.find(needle) {
                 haystack.replace_range(index..index + needle.len(), replacement);
                 Ok(())
             } else {
-                Err(Error::from_chain(
+                Err(anyhow!(
                 "Failed to find text:\n{}\n…in completion script:\n{}",
                 needle, haystack
                 ))
