@@ -64,13 +64,6 @@ alias {cmd}rx='__rualdi_radrx'"#,
 {__rualdi_cd}
 # =============================================================================
 
-setopt extendedglob noshortloops rcexpandparam
-zmodload -Fa zsh/parameter p:commands p:dirstack
-
-typeset -gaH rualdi_aliases
-
-rualdi_aliases=( ${{(@f)"$(rualdi list-alias)"}} )
-
 # Error wrapper
 function __rualdi_error() {{ builtin print -Pr "%F{{1}}%BError:%b%f $@"; }}
 
@@ -114,6 +107,12 @@ function __rualdi_fzf_list() {{
 # Combine above fzf functions into one. Same as __rualdi_cd; however, fzf is involved
 # Has an option to switch to recent directories as well using '-d'
 function __rualdi_fzf {{
+    setopt extendedglob noshortloops rcexpandparam
+    zmodload -Fa zsh/parameter p:commands p:dirstack
+
+    typeset -gaH rualdi_aliases
+    rualdi_aliases=( ${{(@f)"$(rualdi list-alias)"}} )
+
     if [[ $# -eq 1 && "$1" = '-' ]]; then
         if [[ -n "$OLDPWD" ]]; then
             __rualdi_cd "$OLDPWD"

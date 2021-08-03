@@ -74,7 +74,7 @@ impl RadSubCmdRunnable for Completions {
                 haystack.replace_range(index..index + needle.len(), replacement);
                 Ok(())
             } else {
-                Err(anyhow!(
+                Err(Error::from_chain(
                 "Failed to find text:\n{}\n…in completion script:\n{}",
                 needle, haystack
                 ))
