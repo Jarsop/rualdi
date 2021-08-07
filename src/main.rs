@@ -15,15 +15,23 @@ use structopt::StructOpt;
 use clap::{AppSettings};
 use subcommand::RadSubCmdRunnable;
 
+const ENV_VAR_HELP: &str = "\x1b[0;31mENVIRONMENT VARIABLES\x1b[0m
+    \x1b[0;35m_RAD_ALIASES_DIR\x1b[0m        Directory where configuration is stored
+    \x1b[0;35m_RAD_NO_ECHO\x1b[0m            Whether or not to print directory name before cd'ing to it
+    \x1b[0;35m_RAD_RESOLVE_SYMLINKS\x1b[0m   Whether symlinks should be resolved";
+
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = env!("CARGO_PKG_NAME"),
     version = env!("CARGO_PKG_VERSION"),
     author = env!("CARGO_PKG_AUTHORS"),
     about = env!("CARGO_PKG_DESCRIPTION"),
+    after_help = ENV_VAR_HELP,
     global_settings = &[
         AppSettings::ColoredHelp,
-        AppSettings::ColorAlways
+        AppSettings::ColorAlways,
+        AppSettings::DisableHelpSubcommand,
+        AppSettings::VersionlessSubcommands,
     ]
 )]
 struct Rad {

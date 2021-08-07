@@ -16,8 +16,10 @@ structopt = "0.3.17"
 anyhow = "1.0.32"
 dirs-next = "2.0.0"
 colored = "2.0.0"
-clap = "2.33.3"
 terminal_size = "0.1.17"
+glob = "0.3.0"
+clap = "2.33.3"
+async-channel = "1.6.1"
 
 [dev-dependencies]
 tempfile = "3.1.0"
@@ -36,7 +38,7 @@ section = "utility"
 priority = "optional"
 assets = [
     ["target/release/rualdi", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/rualdi/README", "644"],
+    ["README.md", "usr/local/share/doc/rualdi/README", "644"],
 ]
 
 [package.metadata.rpm]
@@ -46,4 +48,4 @@ package = "rualdi"
 buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
-rualdi = { path = "/usr/bin/rualdi" }
+rualdi = { path = "/usr/local/bin/rualdi" }

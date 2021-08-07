@@ -1,0 +1,1 @@
+/Users/lucasburns/projects/rust/rust_justfile

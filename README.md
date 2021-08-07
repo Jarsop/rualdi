@@ -18,6 +18,11 @@ The fork is adding color to the output when listing the aliases and environment 
 * Fix/add tests now after adding colored output
 * Bash completions
 * Color the `%HASH` mapping differently
+* Add `bg`, and `TrueColor` support
+* Colors are getting erased in config
+* Set colors for `radf` function
+* Using `%HASH` in `radf` function
+* Use `fzf`: `tokio` and `async`
 
 ### Table of Contents
 
@@ -40,6 +45,8 @@ The fork is adding color to the output when listing the aliases and environment 
   - [Configuration](#configuration)
     - [`init` flags](#init-flags)
     - [Environment variables](#environment-variables)
+    - [`[colors]` section](#colors-section)
+    - [`[alias_map]` section](#alias_map-section)
   - [`fzf` integration](#fzf-integration)
       - [No arguments](#no-arguments)
       - [`pushd` wrapper](#pushd-wrapper)
@@ -173,6 +180,53 @@ eval "$(rualdi init zsh)"
 - `$_RAD_NO_ECHO`: when set to `1`, `rad` will not print the matched directory before navigating to it
 - `$_RAD_RESOLVE_SYMLINKS`: when set to `1`, `rad` will resolve symlinks before print the matched directory.
 
+### `[colors]` section
+
+The default colors that are used are the following, and can be found in the `$_RAD_ALIASES_DIR/rualdi.toml` file.
+```toml
+[colors]
+name = "bright yellow"
+separator = "bright cyan"
+path = "magenta"
+```
+The available colors are:
+* `red`, `bright red`
+* `yellow`, `bright yellow`
+* `green`, `bright green`
+* `blue`, `bright blue`
+* `cyan`, `bright cyan`
+* `magenta`, `bright magenta`
+* `white`, `bright white`
+* `black`, `bright black`
+
+### `[alias_map]` section
+Sometimes the paths can get fairly long, so it is possible to create a hash (really an [`IndexMap`](https://docs.rs/indexmap/1.7.0/indexmap/)) that will map common paths to something like the following:
+
+```
+/Users/user/.config/zsh/zsh.d = %ZDOTDIR/zsh.d
+```
+
+It can be configured in `rualdi.toml`, and it is possible to use both a tilde (`~`) and environment variables.
+The left-side is what will be prefixed with a `%` and displayed.
+
+**NOTE:** It is wise to create the hash with the most specific variables at the beginning, and the least specific variables at the end.
+```toml
+[alias_hash]
+ZDOTDIR = "$ZDOTDIR"
+XDG_CONFIG_HOME = "/Users/user/.config"
+XDG_CACHE_HOME = "~/.cache"
+XDG_DATA_HOME = "${HOME}/.local/share"
+HOME = "$HOME"
+```
+
+There are already several of these mappings that are ready to be implemented and can be turn on with any of the three:
+```toml
+[alias_hash]
+use_default = "on"
+use_default = "1" # Must be a string
+use_default = "yes"
+```
+
 ## `fzf` integration
 
 **Requires**:
@@ -250,4 +304,4 @@ r comp # rualdi completions
 
 #### Documentation for Crates
 
-* [`dirs-next`]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
+* [`dirs-next`](https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html)

@@ -1,7 +1,7 @@
 //! Module to parse rad config file in TOML format
 use anyhow::{anyhow, Context, Result};
 use serde_derive::{Deserialize, Serialize};
-use shellexpand::tilde;
+use shellexpand::{tilde, full, LookupError};
 use terminal_size::terminal_size;
 
 use std::{
@@ -42,6 +42,8 @@ pub struct Aliases {
     pub aliases: Option<BTreeMap<String, String>>,
     #[serde(rename = "environment")]
     pub vars: Option<BTreeMap<String, String>>,
+    pub colors: Option<BTreeMap<String, String>>,
+    pub alias_hash: Option<BTreeMap<String, String>>,
     #[serde(skip)]
     modified: bool,
     #[serde(skip)]
@@ -68,23 +70,6 @@ pub struct Aliases {
 /// # Ok(())
 /// # }
 /// ```
-
-// FIX: Unsure where to place this?
-/// Helper function to get different directories for macOS specifically
-/// Example: `cache_dir()` returns `$HOME/Library/Caches`, when this will return `$HOME/.cache`
-pub fn macos_dirs(dir_func: Option<PathBuf>, joined: &str) -> PathBuf {
-    if env::consts::OS == "macos" {
-        PathBuf::from(env!("HOME")).join(joined)
-    } else {
-        dir_func.unwrap_or(
-            PathBuf::from(format!(
-                    "INVALID_{}_DIR",
-                    joined.to_uppercase()
-                    ))
-            )
-    }
-}
-
 impl Aliases {
     /// Open rualdi aliases file from default aliases directory,
     /// default directory can be configured by _RAD_ALIASES_DIR
@@ -100,7 +85,13 @@ impl Aliases {
         let path = Self::get_path(&aliases_dir);
 
         if !path.is_file() {
-            let default_file = "# Rualdi aliases configuration file\n# DO NOT EDIT\n";
+            let default_file = r#"# Rualdi aliases configuration file
+# DO NOT EDIT VARIABLES AND ALIASES
+[colors]
+alias = "yellow"
+separator = "bright cyan"
+path = "magenta"
+"#;
             let mut aliases_file: fs::File = fs::OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -112,6 +103,7 @@ impl Aliases {
                 .with_context(|| format!("could not create alias file: '{}'", path.display()))?;
             aliases_file.flush()?;
         }
+
         let mut aliases_file = fs::File::open(&path)
             .with_context(|| format!("could not open alias file: '{}'", path.display()))?;
 
@@ -147,7 +139,7 @@ impl Aliases {
             aliases_file.sync_data()?;
 
             let mut content = String::new();
-            content.push_str("# Rualdi aliases configuration file\n# DO NOT EDIT\n");
+            content.push_str("# Rualdi aliases configuration file\n# DO NOT EDIT VARIABLES AND ALIASES\n");
 
             let data = toml::to_string(&self).with_context(|| "fail to encode aliases in toml")?;
             content.push_str(data.as_str());
@@ -167,13 +159,9 @@ impl Aliases {
     /// Add alias on path in aliase configuration file, raise an error if alias
     /// already exists.
     pub fn add(&mut self, alias: String, path: String) -> Result<()> {
-        let mut aliases = match self.aliases.to_owned() {
-            Some(aliases) => aliases,
-            _ => {
-                self.modified = true;
-                BTreeMap::new()
-            }
-        };
+        let mut aliases = self.selfmatch(self.aliases.to_owned());
+        let colors = self.selfmatch(self.colors.to_owned());
+        let alias_hash = self.selfmatch(self.alias_hash.to_owned());
 
         if aliases.contains_key(&alias) {
             return Err(anyhow!("alias '{}' already exists", alias));
@@ -182,6 +170,8 @@ impl Aliases {
         aliases.insert(alias, path);
 
         self.aliases = Some(aliases);
+        self.alias_hash = Some(alias_hash);
+        self.colors = Some(colors);
         self.modified = true;
         Ok(())
     }
@@ -190,13 +180,9 @@ impl Aliases {
     /// to load it in shell environment, raise an error if environment variable
     /// already exists.
     pub fn add_env(&mut self, alias: String, var_name: String) -> Result<()> {
-        let mut vars = match self.vars.to_owned() {
-            Some(vars) => vars,
-            _ => {
-                self.modified = true;
-                BTreeMap::new()
-            }
-        };
+        let mut vars = self.selfmatch(self.vars.to_owned());
+        let colors = self.selfmatch(self.colors.to_owned());
+        let alias_hash = self.selfmatch(self.alias_hash.to_owned());
 
         if vars.contains_key(&alias) {
             return Err(anyhow!(
@@ -217,6 +203,8 @@ impl Aliases {
         vars.insert(alias, var_name);
 
         self.vars = Some(vars);
+        self.alias_hash = Some(alias_hash);
+        self.colors = Some(colors);
         self.modified = true;
         Ok(())
     }
@@ -224,13 +212,9 @@ impl Aliases {
     /// Remove alias on path in aliase configuration file, raise an error if alias
     /// not exists.
     pub fn remove(&mut self, alias: String) -> Result<()> {
-        let mut aliases = match self.aliases.to_owned() {
-            Some(aliases) => aliases,
-            _ => {
-                self.modified = true;
-                BTreeMap::new()
-            }
-        };
+        let mut aliases = self.selfmatch(self.aliases.to_owned());
+        let colors = self.selfmatch(self.colors.to_owned());
+        let alias_hash = self.selfmatch(self.alias_hash.to_owned());
 
         if !aliases.contains_key(&alias) {
             return Err(anyhow!("alias '{}' not exists", alias));
@@ -239,6 +223,8 @@ impl Aliases {
         aliases.remove(&alias);
 
         self.aliases = Some(aliases);
+        self.alias_hash = Some(alias_hash);
+        self.colors = Some(colors);
         self.modified = true;
         Ok(())
     }
@@ -247,13 +233,9 @@ impl Aliases {
     /// in aliase configuration file, raise an error if variable
     /// not exists.
     pub fn remove_env(&mut self, alias: String) -> Result<()> {
-        let mut vars = match self.vars.to_owned() {
-            Some(vars) => vars,
-            _ => {
-                self.modified = true;
-                BTreeMap::new()
-            }
-        };
+        let mut vars = self.selfmatch(self.vars.to_owned());
+        let colors = self.selfmatch(self.colors.to_owned());
+        let alias_hash = self.selfmatch(self.alias_hash.to_owned());
 
         if !vars.contains_key(&alias) {
             return Err(anyhow!(
@@ -265,6 +247,8 @@ impl Aliases {
         vars.remove(&alias);
 
         self.vars = Some(vars);
+        self.alias_hash = Some(alias_hash);
+        self.colors = Some(colors);
         self.modified = true;
         Ok(())
     }
@@ -276,144 +260,22 @@ impl Aliases {
             if aliases.is_empty() {
                 None
             } else {
-                let mut alias_hash = IndexMap::new();
-
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("vimwiki")
-                        .into_os_string().into_string().unwrap(),
-                    "%WIKI_DIR"
-                );
-
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("Applications")
-                        .into_os_string().into_string().unwrap(),
-                    "%APPLICATIONS"
-                );
-
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("Library")
-                        .into_os_string().into_string().unwrap(),
-                    "%LIBRARY"
-                );
-
-                // TODO: maybe check if path exists here
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("github")
-                        .into_os_string().into_string().unwrap(),
-                    "%GITHUB"
-                );
-                // ^^
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("projects/github")
-                        .into_os_string().into_string().unwrap(),
-                    "%PR_GITHUB"
-                );
-
-                alias_hash.insert(
-                    PathBuf::from(env!("HOME")).join("ghq")
-                        .into_os_string().into_string().unwrap(),
-                    "%GHQ"
-                );
-
-                // TODO: Catch error here
-                alias_hash.insert(
-                    PathBuf::from(env!("ZDOTDIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%ZDOTDIR"
-                );
-
-                // Should match on every system
-                // Also, the INVALID_... is so:
-                    // 1) There is not a duplicate key
-                    // 2) I'm hoping that there is not a path containing that name
-                alias_hash.insert(
-                    dirs::audio_dir().unwrap_or(PathBuf::from("INVALID_AUDIO_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%AUDIO_HOME"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::cache_dir(), ".cache")
-                        .into_os_string().into_string().unwrap(),
-                    "%CACHE_HOME"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::config_dir(), ".config")
-                        .into_os_string().into_string().unwrap(),
-                    "%CONFIG_HOME"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::data_dir(), ".local/share")
-                        .into_os_string().into_string().unwrap(),
-                    "%DATA_HOME"
-                );
-
-                alias_hash.insert(
-                    dirs::desktop_dir().unwrap_or(PathBuf::from("INVALID_DESKTOP_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%DESKTOP"
-                );
-
-                alias_hash.insert(
-                    dirs::document_dir().unwrap_or(PathBuf::from("INVALID_DOCUMENT_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%DOCUMENTS"
-                );
-
-                alias_hash.insert(
-                    dirs::download_dir().unwrap_or(PathBuf::from("INVALID_DOWNLOAD_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%DOWNLOADS"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::executable_dir(), ".local/bin")
-                        .into_os_string().into_string().unwrap(),
-                    "%BIN_HOME"
-                );
-
-                alias_hash.insert(
-                    dirs::font_dir().unwrap_or(PathBuf::from("INVALID_FONT_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%FONTS"
-                );
-
-                alias_hash.insert(
-                    dirs::picture_dir().unwrap_or(PathBuf::from("INVALID_PICTURE_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%PICTURES"
-                );
-
-                alias_hash.insert(
-                    dirs::public_dir().unwrap_or(PathBuf::from("INVALID_PUBLIC_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%PUBLIC"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::runtime_dir(), ".local/tmp")
-                        .into_os_string().into_string().unwrap(),
-                    "%RUNTIME_DIR"
-                );
-
-                alias_hash.insert(
-                    macos_dirs(dirs::template_dir(), "Templates")
-                        .into_os_string().into_string().unwrap(),
-                    "%TEMPLATE_DIR"
-                );
-
-                alias_hash.insert(
-                    dirs::video_dir().unwrap_or(PathBuf::from("INVALID_VIDEO_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%VIDEO_DIR"
-                );
-
-                alias_hash.insert(
-                    dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
-                        .into_os_string().into_string().unwrap(),
-                    "%HOME"
+                // TODO: test invalid environment var
+                // TODO: test no environment vars with header section
+                // TODO: test no environment vars without header section
+                // If default is off and there are no aliases listed, insert the home directory
+                // mapping with itself to prevent errors
+                let alias_hash = self.build_alias_hash()
+                    .unwrap_or_else(|| {
+                        let mut tmp = IndexMap::new();
+                        tmp.insert(
+                            dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                                .into_os_string().into_string().unwrap(),
+                            dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                                .into_os_string().into_string().unwrap()
+                        );
+                        tmp
+                    }
                 );
 
                 let mut reg = Vec::new();
@@ -432,19 +294,23 @@ impl Aliases {
                     .as_str()
                     );
 
+                let color_alias = self.get_colors("alias").unwrap_or(Color::Yellow);
+                let color_separator = self.get_colors("separator").unwrap_or(Color::BrightCyan);
+                let color_path = self.get_colors("path").unwrap_or(Color::Magenta);
+
                 let re = Regex::new(format!(r"({})", reg.join("|")).as_str()).unwrap();
                 for (alias, path) in aliases.iter() {
                     let new_path = if re.is_match(path) {
                         re.replace(path, |caps: &Captures| {
-                            *alias_hash.get(caps.get(1).unwrap().as_str()).unwrap()
+                            alias_hash.get(caps.get(1).unwrap().as_str()).unwrap()
                         })
                     } else {
                         Cow::from(path)
                     };
                     res.push_str(format!("{:<12} {:<2} {}\n",
-                            alias.yellow(),
-                            "=>".bright_cyan(),
-                            new_path.magenta())
+                            alias.color(color_alias).bold(),
+                            "=>".color(color_separator).bold(),
+                            new_path.color(color_path))
                         .as_str()
                         );
                 }
@@ -460,9 +326,9 @@ impl Aliases {
                             );
                             for (alias, var) in vars.iter() {
                                 res.push_str(format!("{:<12} {:<2} {}\n",
-                                        var.yellow(),
-                                        "=>".bright_cyan(),
-                                        alias.magenta())
+                                        var.color(color_alias).bold(),
+                                        "=>".color(color_separator).bold(),
+                                        alias.color(color_path))
                                     .as_str()
                                     );
                         }
@@ -553,6 +419,182 @@ impl Aliases {
         aliases_dir.as_ref().join("rualdi.toml")
     }
 
+    /// Helper function to prevent having  to type match statement
+    fn selfmatch(&mut self, matching: Option<BTreeMap<String, String>>
+    ) -> BTreeMap<String, String>
+    {
+        match matching {
+            Some(matching) => matching,
+            _ => {
+                self.modified = true;
+                BTreeMap::new()
+            }
+        }
+    }
+
+    /// Build an alias-directory mapping hash to shorten the lengths of paths
+    fn build_alias_hash(&self) -> Option<IndexMap<String, String>> {
+        /// Helper function to get different directories for macOS specifically
+        /// Example: `cache_dir()` returns `$HOME/Library/Caches`, when this will return `$HOME/.cache`
+        fn macos_dirs(dir_func: Option<PathBuf>, joined: &str) -> PathBuf {
+            if env::consts::OS == "macos" {
+                PathBuf::from(env!("HOME")).join(joined)
+            } else {
+                dir_func.unwrap_or(
+                    PathBuf::from(format!(
+                            "INVALID_{}_DIR",
+                            joined.to_uppercase()
+                            ))
+                    )
+            }
+        }
+
+        if let Some(alias_hash) = &self.alias_hash {
+            if alias_hash.is_empty() {
+                None
+            } else {
+                let mut new_alias_hash = IndexMap::new();
+
+                // Configuration set variables need to be parsed first to set the variables before
+                // the default does. The IndexMap will keep the order
+                for short in alias_hash.keys() {
+                    new_alias_hash.insert(
+                        PathBuf::from(full(
+                                alias_hash.get(short).unwrap()
+                            ).unwrap_or_else(|_| {
+                                Cow::from(LookupError {
+                                    var_name: "UNKNOWN_ENVIRONMENT_VARIABLE".into(),
+                                    cause: env::VarError::NotPresent
+                                }.to_string())
+                            }).to_string()
+                            ).into_os_string().into_string().unwrap(),
+                        format!("%{}", short)
+                    );
+                }
+
+                if Regex::new(r"on|yes|1").unwrap().is_match(
+                    alias_hash.get("use_default")
+                        .unwrap_or(&"N/A".to_string())
+                        .as_str())
+                {
+                    // Should match on every system
+                    // Also, the INVALID_... is so:
+                        // 1) There is not a duplicate key
+                        // 2) I'm hoping that there is not a path containing that name
+                    new_alias_hash.insert(
+                        dirs::audio_dir().unwrap_or(PathBuf::from("INVALID_AUDIO_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%AUDIO_HOME".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::cache_dir(), ".cache")
+                            .into_os_string().into_string().unwrap(),
+                        "%CACHE_HOME".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::config_dir(), ".config")
+                            .into_os_string().into_string().unwrap(),
+                        "%CONFIG_HOME".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::data_dir(), ".local/share")
+                            .into_os_string().into_string().unwrap(),
+                        "%DATA_HOME".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::desktop_dir().unwrap_or(PathBuf::from("INVALID_DESKTOP_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%DESKTOP".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::document_dir().unwrap_or(PathBuf::from("INVALID_DOCUMENT_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%DOCUMENTS".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::download_dir().unwrap_or(PathBuf::from("INVALID_DOWNLOAD_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%DOWNLOADS".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::executable_dir(), ".local/bin")
+                            .into_os_string().into_string().unwrap(),
+                        "%BIN_HOME".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::font_dir().unwrap_or(PathBuf::from("INVALID_FONT_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%FONTS".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::picture_dir().unwrap_or(PathBuf::from("INVALID_PICTURE_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%PICTURES".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::public_dir().unwrap_or(PathBuf::from("INVALID_PUBLIC_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%PUBLIC".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::runtime_dir(), ".local/tmp")
+                            .into_os_string().into_string().unwrap(),
+                        "%RUNTIME_DIR".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        macos_dirs(dirs::template_dir(), "Templates")
+                            .into_os_string().into_string().unwrap(),
+                        "%TEMPLATE_DIR".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::video_dir().unwrap_or(PathBuf::from("INVALID_VIDEO_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%VIDEO_DIR".to_string()
+                    );
+
+                    new_alias_hash.insert(
+                        dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                            .into_os_string().into_string().unwrap(),
+                        "%HOME".to_string()
+                    );
+                }
+
+                Some(new_alias_hash)
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Get colors from configuration to colorize output
+    fn get_colors(&self, colored: &str) -> Option<Color> {
+        if let Some(colors) = &self.colors {
+            if colors.is_empty() {
+                None
+            } else if let Some(color) = colors.get(colored) {
+                // Unwraps to white if invalid
+                Some(Color::from(color.as_str()))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     /// Search alias in rualdi aliases configuration file,
     /// return None if alias not found
     pub fn get(&self, alias: &str) -> Option<String> {
@@ -604,9 +646,17 @@ impl MockAliases {
         let mut aliases: BTreeMap<String, String> = BTreeMap::new();
         aliases.insert("test".into(), "/test/haha".into());
         aliases.insert("Home".into(), "~".into());
+
+        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        colors.insert("name".into(), "red".into());
+        colors.insert("separator".into(), "cyan".into());
+        colors.insert("path".into(), "green".into());
+
         Aliases {
             aliases: Some(aliases),
             vars: None,
+            colors: Some(colors),
+            alias_hash: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -620,9 +670,16 @@ impl MockAliases {
         let mut vars: BTreeMap<String, String> = BTreeMap::new();
         vars.insert("test".into(), "TEST".into());
 
+        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        colors.insert("name".into(), "red".into());
+        colors.insert("separator".into(), "bright cyan".into());
+        colors.insert("path".into(), "green".into());
+
         Aliases {
             aliases: Some(aliases),
             vars: Some(vars),
+            colors: Some(colors),
+            alias_hash: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -638,9 +695,16 @@ impl MockAliases {
         vars.insert("test".into(), "TEST".into());
         vars.insert("test2".into(), "TEST2".into());
 
+        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        colors.insert("name".into(), "red".into());
+        colors.insert("separator".into(), "cyan".into());
+        colors.insert("path".into(), "green".into());
+
         Aliases {
             aliases: Some(aliases),
             vars: Some(vars),
+            colors: Some(colors),
+            alias_hash: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -649,9 +713,39 @@ impl MockAliases {
     pub fn open_no_aliases() -> Aliases {
         let aliases: BTreeMap<String, String> = BTreeMap::new();
         let vars: BTreeMap<String, String> = BTreeMap::new();
+
+        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        colors.insert("name".into(), "red".into());
+        colors.insert("separator".into(), "cyan".into());
+        colors.insert("path".into(), "green".into());
+
         Aliases {
             aliases: Some(aliases),
             vars: Some(vars),
+            colors: Some(colors),
+            alias_hash: None,
+            modified: false,
+            aliases_file: PathBuf::new(),
+        }
+    }
+
+    pub fn open_no_colors() -> Aliases {
+        let mut aliases: BTreeMap<String, String> = BTreeMap::new();
+        aliases.insert("test".into(), "/test/haha".into());
+        aliases.insert("test2".into(), "/test2/haha".into());
+        aliases.insert("Home".into(), "~".into());
+
+        let mut vars: BTreeMap<String, String> = BTreeMap::new();
+        vars.insert("test".into(), "TEST".into());
+        vars.insert("test2".into(), "TEST2".into());
+
+        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+
+        Aliases {
+            aliases: Some(aliases),
+            vars: Some(vars),
+            colors: None,
+            alias_hash: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -661,6 +755,8 @@ impl MockAliases {
         Aliases {
             aliases: None,
             vars: None,
+            colors: None,
+            alias_hash: None,
             modified: false,
             aliases_file: PathBuf::new(),
         }
@@ -693,7 +789,7 @@ impl TmpConfig {
         self.tmp_file = File::create(file_path)?;
         writeln!(
             self.tmp_file,
-            "# Rualdi aliases configuration file\n# DO NOT EDIT\n"
+            "# Rualdi aliases configuration file\n# DO NOT EDIT VARIABLES AND ALIASES\n"
         )?;
         Ok(self)
     }

@@ -87,10 +87,10 @@ function __rualdi_colorize() {{
     local field='\(\S\+\s*\)'
     local esc=$(builtin print '\033')
     local N="${{esc}}[0m"
-    local R="${{esc}}[31m"
+    local R="${{esc}}[01;38;5;10m"
     local G="${{esc}}[32m"
-    local Y="${{esc}}[38;5;14m"
-    local B="${{esc}}[34m"
+    local Y="${{esc}}[01;38;5;4m"
+    local B="${{esc}}[38;5;3m"
     local pattern="s#^${{field}}${{field}}${{field}}#$Y\1$R\2$N$B\3$N#"
     (( $+commands[gsed] )) && gsed "$pattern" || sed "$pattern"
 }}
