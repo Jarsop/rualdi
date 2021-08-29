@@ -5,7 +5,6 @@ use std::{
     path::PathBuf,
     env,
     fs,
-    ffi::OsString
 };
 
 pub fn rad_aliases_dir() -> Result<PathBuf> {

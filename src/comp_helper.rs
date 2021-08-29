@@ -216,13 +216,6 @@ _rualdi__completions_commands() {
     )
     _describe -t commands 'rualdi completions commands' commands \"$@\"
 }
-(( $+functions[_rualdi__help_commands] )) ||
-_rualdi__help_commands() {
-    local commands; commands=(
-\x20\x20\x20\x20\x20\x20\x20\x20
-    )
-    _describe -t commands 'rualdi help commands' commands \"$@\"
-}
 (( $+functions[_i_commands] )) ||
 _i_commands() {
     local commands; commands=(
@@ -394,72 +387,72 @@ _rx_commands() {
 ",
         r#""#,
     ),
-// FIX: use the other two functions in this one?
-    (
-        r#"_rualdi "$@""#,
-        r#"(( $+functions[_rualdi_variables] )) ||
-_rualdi_variables() {
-    [[ $PREFIX = -* ]] && return 1
-    integer ret=1
-    local -a aliases; aliases=(
-        ${(@f)$(_call_program commands rualdi completions alias)}
-    )
-    local -a env_vars; env_vas=(
-        ${(@f)$(_call_program commands rualdi completions env)}
-    )
-
-    _alternative \
-      'aliases:aliases:compadd -a - aliases' \
-      'env_vars:environment vars:compadd -a - env_vars' && \
-          ret=0
-
-    return ret
-}
-
-(( $+functions[_rualdi_aliases] )) ||
-_rualdi_aliases() {
-    [[ $PREFIX = -* ]] && return 1
-    integer ret=1
-    local -a aliases; aliases=(
-        ${(@f)$(_call_program commands rualdi completions alias)}
-    )
-
-    _describe -t aliases 'aliases' aliases && ret=0
-
-    return ret
-}
-
-(( $+functions[_rualdi_envs] )) ||
-_rualdi_envs() {
-    [[ $PREFIX = -* ]] && return 1
-    integer ret=1
-    local -a env_vars; env_vars=(
-        ${(@f)$(_call_program commands rualdi completions env)}
-    )
-
-    _describe -t env_vars 'environment vars' env_vars && ret=0
-
-    return ret
-}
-
-_rualdi "$@""#
-    ),
-    (
-        r#"'::alias -- Alias to remove:_files' \"#,
-        r#"'::alias -- Alias to remove:_rualdi_variables' \"#
-    ),
-    (
-        r#"':alias -- Alias for which to remove the environment variable:_files' \"#,
-        r#"':alias -- Alias for which to remove the environment variable:_rualdi_envs' \"#
-    ),
-    (
-        r#"':path -- Path to resolve alias:_files' \"#,
-        r#"':path -- Path to resolve alias:_rualdi_envs' \"#
-    ),
-    (
-        r#"':alias -- Alias for which to find environment variable:_files' \"#,
-        r#"':alias -- Alias for which to find environment variable:_rualdi_aliases' \"#
-    )
+// // FIX: use the other two functions in this one?
+//     (
+//         r#"_rualdi "$@""#,
+//         r#"(( $+functions[_rualdi_variables] )) ||
+// _rualdi_variables() {
+//     [[ $PREFIX = -* ]] && return 1
+//     integer ret=1
+//     local -a aliases; aliases=(
+//         ${(@f)$(_call_program commands rualdi completions alias)}
+//     )
+//     local -a env_vars; env_vas=(
+//         ${(@f)$(_call_program commands rualdi completions env)}
+//     )
+//
+//     _alternative \
+//       'aliases:aliases:compadd -a - aliases' \
+//       'env_vars:environment vars:compadd -a - env_vars' && \
+//           ret=0
+//
+//     return ret
+// }
+//
+// (( $+functions[_rualdi_aliases] )) ||
+// _rualdi_aliases() {
+//     [[ $PREFIX = -* ]] && return 1
+//     integer ret=1
+//     local -a aliases; aliases=(
+//         ${(@f)$(_call_program commands rualdi completions alias)}
+//     )
+//
+//     _describe -t aliases 'aliases' aliases && ret=0
+//
+//     return ret
+// }
+//
+// (( $+functions[_rualdi_envs] )) ||
+// _rualdi_envs() {
+//     [[ $PREFIX = -* ]] && return 1
+//     integer ret=1
+//     local -a env_vars; env_vars=(
+//         ${(@f)$(_call_program commands rualdi completions env)}
+//     )
+//
+//     _describe -t env_vars 'environment vars' env_vars && ret=0
+//
+//     return ret
+// }
+//
+// _rualdi "$@""#
+//     ),
+//     (
+//         r#"'::alias -- Alias to remove:_files' \"#,
+//         r#"'::alias -- Alias to remove:_rualdi_variables' \"#
+//     ),
+//     (
+//         r#"':alias -- Alias for which to remove the environment variable:_files' \"#,
+//         r#"':alias -- Alias for which to remove the environment variable:_rualdi_envs' \"#
+//     ),
+//     (
+//         r#"':path -- Path to resolve alias:_files' \"#,
+//         r#"':path -- Path to resolve alias:_rualdi_envs' \"#
+//     ),
+//     (
+//         r#"':alias -- Alias for which to find environment variable:_files' \"#,
+//         r#"':alias -- Alias for which to find environment variable:_rualdi_aliases' \"#
+//     )
 ];
 
 // _files => _files -/
