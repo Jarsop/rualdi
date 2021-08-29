@@ -56,8 +56,7 @@ fn resolve_alias<P: AsRef<Path>>(path: P, aliases: Aliases) -> Result<PathBuf> {
     let alias = aliases.get(to_find);
     let result = match alias {
         Some(alias) => {
-            let mut resolved: Vec<&OsStr> = Vec::new();
-            resolved.push(OsStr::new(&alias));
+            let mut resolved: Vec<&OsStr> = vec![OsStr::new(&alias)];
             resolved.extend(
                 components
                     .map(|comp| comp.as_os_str())

@@ -1,9 +1,12 @@
 use anyhow::{bail, Context, Result};
 #[cfg(test)]
 use serial_test::serial;
-use std::env;
-use std::fs;
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    env,
+    fs,
+    ffi::OsString
+};
 
 pub fn rad_aliases_dir() -> Result<PathBuf> {
     let aliases_dir = match env::var_os("_RAD_ALIASES_DIR") {
@@ -42,6 +45,10 @@ pub fn rad_resolve_symlinks() -> bool {
         None => false,
     }
 }
+
+// pub fn fzf_opts() -> Option<OsString> {
+//     env::var_os("_RAD_FZF_OPTS")
+// }
 
 #[cfg(test)]
 mod tests {

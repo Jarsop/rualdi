@@ -9,12 +9,14 @@ use crate::{
 
 use std::{io::Cursor, str::FromStr};
 
-#[cfg(test)]
-use crate::fixture;
 use anyhow::{anyhow, Context, Result};
 use rualdlib::Aliases;
-#[cfg(test)]
-use serial_test::serial;
+
+// #[cfg(test)]
+// use crate::fixture;
+// #[cfg(test)]
+// use serial_test::serial;
+
 use structopt::{
     StructOpt,
     clap::{arg_enum, Shell},
@@ -98,7 +100,7 @@ impl RadSubCmdRunnable for Completions {
                 let shell = Shell::from_str(
                     &self.shell
                     .as_ref()
-                    .unwrap_or_else(|| &ShellType::zsh)
+                    .unwrap_or(&ShellType::zsh)
                     .to_string())
                     .unwrap();
 
@@ -119,7 +121,7 @@ impl RadSubCmdRunnable for Completions {
                     _ => println!(),
                 }
 
-                format!("{}", script.trim())
+                script.trim().to_string()
             }
         };
 

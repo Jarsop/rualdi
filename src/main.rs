@@ -3,6 +3,7 @@ mod comp_helper;
 mod error;
 #[cfg(test)]
 mod fixture;
+// mod fzf;
 #[macro_use]
 mod macros;
 mod subcommand;
@@ -12,7 +13,7 @@ use crate::error::SilentExit;
 use anyhow::Result;
 use std::process;
 use structopt::StructOpt;
-use clap::{AppSettings};
+use clap::AppSettings;
 use subcommand::RadSubCmdRunnable;
 
 const ENV_VAR_HELP: &str = "\x1b[0;31mENVIRONMENT VARIABLES\x1b[0m
@@ -85,7 +86,6 @@ fn rad_main() -> Result<String> {
 
     if res.is_ok() {
         print!("{}", res.as_ref().unwrap());
-        // print!("{:?}", clap::App::);
     }
 
     res.map_err(|e| match e.downcast::<SilentExit>() {
