@@ -1,31 +1,27 @@
 //! Module to parse rad config file in TOML format
 use anyhow::{anyhow, Context, Result};
 use serde_derive::{Deserialize, Serialize};
-use shellexpand::{tilde, full, LookupError};
+use shellexpand::{full, tilde, LookupError};
 use terminal_size::terminal_size;
 
 use std::{
+    borrow::Cow,
     collections::BTreeMap,
-    fs,
-    env,
-    path::{Path, PathBuf},
+    env, fs,
     io::prelude::*,
-    borrow::Cow
+    path::{Path, PathBuf},
 };
 
 // A hash that keeps its order
 use indexmap::IndexMap;
 
 #[cfg(test)]
-use std::{
-    fs::File,
-    io::Write,
-};
+use std::{fs::File, io::Write};
 
+use colored::*;
+use regex::{Captures, Regex};
 #[cfg(test)]
 use tempfile::{Builder, TempDir};
-use colored::*;
-use regex::{Regex, Captures};
 
 /// Contain aliases and assiociated path
 /// ```
@@ -139,7 +135,9 @@ path = "magenta"
             aliases_file.sync_data()?;
 
             let mut content = String::new();
-            content.push_str("# Rualdi aliases configuration file\n# DO NOT EDIT VARIABLES AND ALIASES\n");
+            content.push_str(
+                "# Rualdi aliases configuration file\n# DO NOT EDIT VARIABLES AND ALIASES\n",
+            );
 
             let data = toml::to_string(&self).with_context(|| "fail to encode aliases in toml")?;
             content.push_str(data.as_str());
@@ -265,18 +263,22 @@ path = "magenta"
                 // TODO: test no environment vars without header section
                 // If default is off and there are no aliases listed, insert the home directory
                 // mapping with itself to prevent errors
-                let alias_hash = self.build_alias_hash()
-                    .unwrap_or_else(|| {
-                        let mut tmp = IndexMap::new();
-                        tmp.insert(
-                            dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
-                                .into_os_string().into_string().unwrap(),
-                            dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
-                                .into_os_string().into_string().unwrap()
-                        );
-                        tmp
-                    }
-                );
+                let alias_hash = self.build_alias_hash().unwrap_or_else(|| {
+                    let mut tmp = IndexMap::new();
+                    tmp.insert(
+                        dirs::home_dir()
+                            .unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        dirs::home_dir()
+                            .unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                    );
+                    tmp
+                });
 
                 let mut reg = Vec::new();
                 for (k, _) in alias_hash.iter() {
@@ -286,13 +288,16 @@ path = "magenta"
                 let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(0);
                 let mut res = String::new();
 
-                res.push_str(format!("{}\n{: ^width$}\n{}\n",
+                res.push_str(
+                    format!(
+                        "{}\n{: ^width$}\n{}\n",
                         "=".repeat(width).green().bold(),
                         "ALIASES".red().bold(),
                         "=".repeat(width).green().bold(),
-                        width = width - 1)
-                    .as_str()
-                    );
+                        width = width - 1
+                    )
+                    .as_str(),
+                );
 
                 let color_alias = self.get_colors("alias").unwrap_or(Color::Yellow);
                 let color_separator = self.get_colors("separator").unwrap_or(Color::BrightCyan);
@@ -307,30 +312,39 @@ path = "magenta"
                     } else {
                         Cow::from(path)
                     };
-                    res.push_str(format!("{:<12} {:<2} {}\n",
+                    res.push_str(
+                        format!(
+                            "{:<12} {:<2} {}\n",
                             alias.color(color_alias).bold(),
                             "=>".color(color_separator).bold(),
-                            new_path.color(color_path))
-                        .as_str()
-                        );
+                            new_path.color(color_path)
+                        )
+                        .as_str(),
+                    );
                 }
 
                 if let Some(vars) = &self.vars {
                     if !vars.is_empty() {
-                        res.push_str(format!("{}\n{: ^width$}\n{}\n",
+                        res.push_str(
+                            format!(
+                                "{}\n{: ^width$}\n{}\n",
                                 "=".repeat(width).green().bold(),
                                 "ENVIRONMENT VARIABLES".red().bold(),
                                 "=".repeat(width).green().bold(),
-                                width = width - 1)
-                            .as_str()
+                                width = width - 1
+                            )
+                            .as_str(),
+                        );
+                        for (alias, var) in vars.iter() {
+                            res.push_str(
+                                format!(
+                                    "{:<12} {:<2} {}\n",
+                                    var.color(color_alias).bold(),
+                                    "=>".color(color_separator).bold(),
+                                    alias.color(color_path)
+                                )
+                                .as_str(),
                             );
-                            for (alias, var) in vars.iter() {
-                                res.push_str(format!("{:<12} {:<2} {}\n",
-                                        var.color(color_alias).bold(),
-                                        "=>".color(color_separator).bold(),
-                                        alias.color(color_path))
-                                    .as_str()
-                                    );
                         }
                     }
                 }
@@ -350,12 +364,14 @@ path = "magenta"
                 vars_found
             } else {
                 for (alias, var) in vars.iter() {
-                    vars_found.push_str(format!(
+                    vars_found.push_str(
+                        format!(
                             "{} {} {}\n",
                             alias.yellow(),
                             "=>".bright_cyan(),
-                            var.magenta())
-                        .as_str()
+                            var.magenta()
+                        )
+                        .as_str(),
                     );
                 }
                 vars_found
@@ -420,9 +436,10 @@ path = "magenta"
     }
 
     /// Helper function to prevent having  to type match statement
-    fn selfmatch(&mut self, matching: Option<BTreeMap<String, String>>
-    ) -> BTreeMap<String, String>
-    {
+    fn selfmatch(
+        &mut self,
+        matching: Option<BTreeMap<String, String>>,
+    ) -> BTreeMap<String, String> {
         match matching {
             Some(matching) => matching,
             _ => {
@@ -440,12 +457,10 @@ path = "magenta"
             if env::consts::OS == "macos" {
                 PathBuf::from(env!("HOME")).join(joined)
             } else {
-                dir_func.unwrap_or(
-                    PathBuf::from(format!(
-                            "INVALID_{}_DIR",
-                            joined.to_uppercase()
-                            ))
-                    )
+                dir_func.unwrap_or(PathBuf::from(format!(
+                    "INVALID_{}_DIR",
+                    joined.to_uppercase()
+                )))
             }
         }
 
@@ -459,116 +474,163 @@ path = "magenta"
                 // the default does. The IndexMap will keep the order
                 for short in alias_hash.keys() {
                     new_alias_hash.insert(
-                        PathBuf::from(full(
-                                alias_hash.get(short).unwrap()
-                            ).unwrap_or_else(|_| {
-                                Cow::from(LookupError {
-                                    var_name: "UNKNOWN_ENVIRONMENT_VARIABLE".into(),
-                                    cause: env::VarError::NotPresent
-                                }.to_string())
-                            }).to_string()
-                            ).into_os_string().into_string().unwrap(),
-                        format!("%{}", short)
+                        PathBuf::from(
+                            full(alias_hash.get(short).unwrap())
+                                .unwrap_or_else(|_| {
+                                    Cow::from(
+                                        LookupError {
+                                            var_name: "UNKNOWN_ENVIRONMENT_VARIABLE".into(),
+                                            cause: env::VarError::NotPresent,
+                                        }
+                                        .to_string(),
+                                    )
+                                })
+                                .to_string(),
+                        )
+                        .into_os_string()
+                        .into_string()
+                        .unwrap(),
+                        format!("%{}", short),
                     );
                 }
 
                 if Regex::new(r"on|yes|1").unwrap().is_match(
-                    alias_hash.get("use_default")
+                    alias_hash
+                        .get("use_default")
                         .unwrap_or(&"N/A".to_string())
-                        .as_str())
-                {
+                        .as_str(),
+                ) {
                     // Should match on every system
                     // Also, the INVALID_... is so:
-                        // 1) There is not a duplicate key
-                        // 2) I'm hoping that there is not a path containing that name
+                    // 1) There is not a duplicate key
+                    // 2) I'm hoping that there is not a path containing that name
                     new_alias_hash.insert(
-                        dirs::audio_dir().unwrap_or(PathBuf::from("INVALID_AUDIO_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%AUDIO_HOME".to_string()
+                        dirs::audio_dir()
+                            .unwrap_or(PathBuf::from("INVALID_AUDIO_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%AUDIO_HOME".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::cache_dir(), ".cache")
-                            .into_os_string().into_string().unwrap(),
-                        "%CACHE_HOME".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%CACHE_HOME".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::config_dir(), ".config")
-                            .into_os_string().into_string().unwrap(),
-                        "%CONFIG_HOME".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%CONFIG_HOME".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::data_dir(), ".local/share")
-                            .into_os_string().into_string().unwrap(),
-                        "%DATA_HOME".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%DATA_HOME".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::desktop_dir().unwrap_or(PathBuf::from("INVALID_DESKTOP_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%DESKTOP".to_string()
+                        dirs::desktop_dir()
+                            .unwrap_or(PathBuf::from("INVALID_DESKTOP_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%DESKTOP".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::document_dir().unwrap_or(PathBuf::from("INVALID_DOCUMENT_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%DOCUMENTS".to_string()
+                        dirs::document_dir()
+                            .unwrap_or(PathBuf::from("INVALID_DOCUMENT_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%DOCUMENTS".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::download_dir().unwrap_or(PathBuf::from("INVALID_DOWNLOAD_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%DOWNLOADS".to_string()
+                        dirs::download_dir()
+                            .unwrap_or(PathBuf::from("INVALID_DOWNLOAD_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%DOWNLOADS".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::executable_dir(), ".local/bin")
-                            .into_os_string().into_string().unwrap(),
-                        "%BIN_HOME".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%BIN_HOME".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::font_dir().unwrap_or(PathBuf::from("INVALID_FONT_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%FONTS".to_string()
+                        dirs::font_dir()
+                            .unwrap_or(PathBuf::from("INVALID_FONT_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%FONTS".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::picture_dir().unwrap_or(PathBuf::from("INVALID_PICTURE_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%PICTURES".to_string()
+                        dirs::picture_dir()
+                            .unwrap_or(PathBuf::from("INVALID_PICTURE_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%PICTURES".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::public_dir().unwrap_or(PathBuf::from("INVALID_PUBLIC_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%PUBLIC".to_string()
+                        dirs::public_dir()
+                            .unwrap_or(PathBuf::from("INVALID_PUBLIC_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%PUBLIC".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::runtime_dir(), ".local/tmp")
-                            .into_os_string().into_string().unwrap(),
-                        "%RUNTIME_DIR".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%RUNTIME_DIR".to_string(),
                     );
 
                     new_alias_hash.insert(
                         macos_dirs(dirs::template_dir(), "Templates")
-                            .into_os_string().into_string().unwrap(),
-                        "%TEMPLATE_DIR".to_string()
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%TEMPLATE_DIR".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::video_dir().unwrap_or(PathBuf::from("INVALID_VIDEO_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%VIDEO_DIR".to_string()
+                        dirs::video_dir()
+                            .unwrap_or(PathBuf::from("INVALID_VIDEO_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%VIDEO_DIR".to_string(),
                     );
 
                     new_alias_hash.insert(
-                        dirs::home_dir().unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
-                            .into_os_string().into_string().unwrap(),
-                        "%HOME".to_string()
+                        dirs::home_dir()
+                            .unwrap_or(PathBuf::from("INVALID_HOME_DIR"))
+                            .into_os_string()
+                            .into_string()
+                            .unwrap(),
+                        "%HOME".to_string(),
                     );
                 }
 
