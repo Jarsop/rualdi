@@ -8,7 +8,7 @@ fn not_existing_alias() -> Result<()> {
     let actual = String::from_utf8(output.stderr).unwrap();
     assert_eq!(
         actual,
-        "Error: cannot add environment variable 'TEST', no such alias 'test'\n"
+        "Error: [alias] test doesn't exist. Cannot add [env] TEST\n"
     );
     Ok(())
 }
@@ -22,10 +22,7 @@ fn not_existing_var() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(
-        actual,
-        "environment variable 'TEST' for alias 'test' added\n"
-    );
+    assert_eq!(actual, "[env] TEST added for [alias] test");
     Ok(())
 }
 
@@ -38,10 +35,7 @@ fn not_existing_named_var_cap() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").arg("TOTO").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(
-        actual,
-        "environment variable 'TOTO' for alias 'test' added\n"
-    );
+    assert_eq!(actual, "[env] TOTO added for [alias] test");
     Ok(())
 }
 
@@ -54,10 +48,7 @@ fn not_existing_named_var_no_cap() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").arg("toto").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(
-        actual,
-        "environment variable 'TOTO' for alias 'test' added\n"
-    );
+    assert_eq!(actual, "[env] TOTO added for [alias] test");
     Ok(())
 }
 
@@ -72,13 +63,13 @@ fn existing_var() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stderr).unwrap();
-    let expected = String::from(
-        r#"Error: fail to add environment variable 'TEST' for alias 'test'
+    assert_eq!(
+        actual,
+        r#"Error: Failed to add: [env] TEST for [alias] test
 
 Caused by:
     alias 'test' has already a environment variable assiociated
-"#,
+"#
     );
-    assert_eq!(actual, expected);
     Ok(())
 }

@@ -1,13 +1,9 @@
-use crate::{
-    config,
-    ctype_exp,
-    subcommand::RadSubCmdRunnable,
-    utils
-};
+use crate::{config, ctype_exp, subcommand::RadSubCmdRunnable, utils};
 
 #[cfg(test)]
 use crate::fixture;
 use anyhow::{Context, Result};
+use colored::*;
 use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
@@ -15,7 +11,6 @@ use std::path::PathBuf;
 #[cfg(test)]
 use std::str::FromStr;
 use structopt::StructOpt;
-use colored::*;
 
 /// Add new path alias
 #[derive(Debug, StructOpt)]
@@ -28,32 +23,45 @@ pub struct Add {
 
 impl RadSubCmdRunnable for Add {
     fn run(&self) -> Result<String> {
-        let aliases_dir = config::rad_aliases_dir()
-            .with_context(|| format!("[{}] Failed to add: {}",
-                    ctype_exp!("alias"),
-                    self.alias.red().bold())
-                )?;
-        let mut aliases = Aliases::open(aliases_dir)
-            .with_context(|| format!("[{}] Failed to add: {}",
-                    ctype_exp!("alias"),
-                    self.alias.red().bold())
-                )?;
+        let aliases_dir = config::rad_aliases_dir().with_context(|| {
+            format!(
+                "[{}] Failed to add: {}",
+                ctype_exp!("alias"),
+                self.alias.red().bold()
+            )
+        })?;
+        let mut aliases = Aliases::open(aliases_dir).with_context(|| {
+            format!(
+                "[{}] Failed to add: {}",
+                ctype_exp!("alias"),
+                self.alias.red().bold()
+            )
+        })?;
 
         let path = self.path.to_owned().unwrap_or(utils::get_current_dir()?);
-        let path = utils::resolve_path(path)
-            .with_context(|| format!("[{}] Failed to add: {}",
-                    ctype_exp!("alias"),
-                    self.alias.red().bold())
-                )?;
+        let path = utils::resolve_path(path).with_context(|| {
+            format!(
+                "[{}] Failed to add: {}",
+                ctype_exp!("alias"),
+                self.alias.red().bold()
+            )
+        })?;
 
         aliases
             .add(self.alias.to_owned(), utils::path_to_str(&path)?.into())
-            .with_context(|| format!("[{}] Failed to add: {}",
+            .with_context(|| {
+                format!(
+                    "[{}] Failed to add: {}",
                     ctype_exp!("alias"),
-                    self.alias.red().bold())
-                )?;
+                    self.alias.red().bold()
+                )
+            })?;
 
-        Ok(format!("[{}] Added: {}\n", ctype_exp!("alias"), self.alias.red().bold()))
+        Ok(format!(
+            "[{}] Added: {}\n",
+            ctype_exp!("alias"),
+            self.alias.red().bold()
+        ))
     }
 }
 
@@ -70,12 +78,7 @@ mod tests {
         });
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(),
-            format!("[{}] Added: {}\n",
-                ctype_exp!("alias"),
-                "test".to_string().red().bold()
-            )
-        );
+        assert_eq!(res.unwrap(), "[alias] Added: test\n",);
     }
 
     #[test]
@@ -87,12 +90,7 @@ mod tests {
         });
         let res = subcmd.run();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(),
-            format!("[{}] Failed to add: {}",
-                ctype_exp!("alias"),
-                "test".to_string().red().bold()
-            )
-        );
+        assert_eq!(res.unwrap_err().to_string(), "[alias] Failed to add: test");
     }
 
     #[test]
@@ -108,11 +106,6 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(),
-            format!("[{}] Added: {}\n",
-                ctype_exp!("alias"),
-                "test".to_string().red().bold()
-            )
-        );
+        assert_eq!(res.unwrap_err().to_string(), "[alias] Failed to add: test");
     }
 }

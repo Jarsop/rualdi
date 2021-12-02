@@ -4,6 +4,7 @@ use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
 use crate::utils;
 use anyhow::{Context, Result};
+use colored::*;
 use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
@@ -12,7 +13,6 @@ use std::path::{Path, PathBuf};
 #[cfg(test)]
 use std::str::FromStr;
 use structopt::StructOpt;
-use colored::*;
 
 /// Resolve alias
 #[derive(Debug, StructOpt)]
@@ -23,10 +23,18 @@ pub struct Resolve {
 
 impl RadSubCmdRunnable for Resolve {
     fn run(&self) -> Result<String> {
-        let aliases_dir = config::rad_aliases_dir()
-            .with_context(|| format!("failed to resolve alias path '{}'", self.path.display().to_string().green().bold()))?;
-        let aliases = Aliases::open(aliases_dir)
-            .with_context(|| format!("failed to resolve alias for path '{}'", self.path.display().to_string().green().bold()))?;
+        let aliases_dir = config::rad_aliases_dir().with_context(|| {
+            format!(
+                "failed to resolve alias path '{}'",
+                self.path.display().to_string().green().bold()
+            )
+        })?;
+        let aliases = Aliases::open(aliases_dir).with_context(|| {
+            format!(
+                "failed to resolve alias for path '{}'",
+                self.path.display().to_string().green().bold()
+            )
+        })?;
 
         let path;
 
@@ -34,7 +42,10 @@ impl RadSubCmdRunnable for Resolve {
             path = utils::resolve_path(&self.path)?;
         } else {
             let resolved_path = resolve_alias(&self.path, aliases).with_context(|| {
-                format!("failed to resolve alias for path '{}'", self.path.display().to_string().green().bold())
+                format!(
+                    "failed to resolve alias for path '{}'",
+                    self.path.display().to_string().green().bold()
+                )
             })?;
             path = utils::resolve_path(&resolved_path)?;
         }

@@ -4,11 +4,11 @@ use crate::ctype_exp;
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
 use anyhow::{anyhow, Context, Result};
+use colored::*;
 use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
-use colored::*;
 
 /// Add new environment variable for an alias
 #[derive(Debug, StructOpt)]
@@ -89,13 +89,7 @@ mod tests {
         // "cannot add environment variable 'TEST', no such alias 'test'"
         assert_eq!(
             res.unwrap_err().to_string(),
-                format!(
-                    "[{}] {} doesn't exist. Cannot add [{}] {}",
-                    ctype_exp!("alias"),
-                    "test".to_string().red().bold(),
-                    ctype_exp!("env"),
-                    "TEST".to_string().red().bold()
-                )
+            "[alias] test doesn't exist. Cannot add [env] TEST",
         );
     }
 
@@ -111,13 +105,7 @@ mod tests {
         // "cannot add environment variable 'PROVIDED', no such alias 'test'"
         assert_eq!(
             res.unwrap_err().to_string(),
-                format!(
-                    "[{}] {} doesn't exist. Cannot add [{}] {}",
-                    ctype_exp!("alias"),
-                    "test".to_string().red().bold(),
-                    ctype_exp!("env"),
-                    "PROVIDED".to_string().red().bold()
-                )
+            "[alias] test doesn't exist. Cannot add [env] PROVIDED",
         );
     }
 
@@ -135,10 +123,7 @@ mod tests {
         ));
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(
-            res.unwrap(),
-            "environment variable 'TEST' for alias 'test' added\n"
-        );
+        assert_eq!(res.unwrap(), "[env] TEST added for [alias] test");
     }
 
     #[test]
@@ -155,10 +140,7 @@ mod tests {
         ));
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(
-            res.unwrap(),
-            "environment variable 'PROVIDED' for alias 'test' added\n"
-        );
+        assert_eq!(res.unwrap(), "[env] PROVIDED added for [alias] test");
     }
 
     #[test]
@@ -178,7 +160,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to add environment variable 'PROVIDED' for alias 'test'"
+            "Failed to add: [env] PROVIDED for [alias] test"
         );
     }
 
@@ -200,7 +182,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to add environment variable 'TEST' for alias 'test2'"
+            "Failed to add: [env] TEST for [alias] test2"
         );
     }
 
@@ -218,9 +200,6 @@ mod tests {
         ));
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(
-            res.unwrap(),
-            "environment variable 'PROVIDED' for alias 'test' added\n"
-        );
+        assert_eq!(res.unwrap(), "[env] PROVIDED added for [alias] test");
     }
 }

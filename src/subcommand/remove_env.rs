@@ -4,11 +4,11 @@ use crate::ctype_exp;
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
 use anyhow::{Context, Result};
+use colored::*;
 use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
-use colored::*;
 
 /// Remove environment variable for a provided alias
 #[derive(Debug, StructOpt)]
@@ -49,7 +49,7 @@ impl RadSubCmdRunnable for RemoveEnv {
 
         // "environment variable for alias '{}' removed\n",
         Ok(format!(
-            "[{}] Removed: for [{}] {}",
+            "[{}] Removed for [{}] {}",
             ctype_exp!("env"),
             ctype_exp!("alias"),
             self.alias.red().bold()

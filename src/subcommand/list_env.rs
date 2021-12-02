@@ -50,7 +50,7 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), "test TEST\n");
+        assert_eq!(res.unwrap(), "test => TEST\n");
     }
 
     #[test]
@@ -67,6 +67,6 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), "test TEST\ntest2 TEST2\n");
+        assert_eq!(res.unwrap(), "test => TEST\ntest2 => TEST2\n");
     }
 }

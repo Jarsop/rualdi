@@ -1,8 +1,4 @@
-use crate::{
-    comp_helper,
-    config,
-    subcommand::RadSubCmdRunnable
-};
+use crate::{comp_helper, config, subcommand::RadSubCmdRunnable};
 
 // env,
 // str::FromStr,
@@ -18,8 +14,8 @@ use rualdlib::Aliases;
 // use serial_test::serial;
 
 use structopt::{
-    StructOpt,
     clap::{arg_enum, Shell},
+    StructOpt,
 };
 
 use crate::Rad;
@@ -43,7 +39,7 @@ pub struct Completions {
         possible_values = &ShellType::variants(),
         required_if("comp_type", "shell"),
     )]
-    shell: Option<ShellType>
+    shell: Option<ShellType>,
 }
 
 arg_enum! {
@@ -67,57 +63,51 @@ arg_enum! {
 
 impl RadSubCmdRunnable for Completions {
     fn run(&self) -> Result<String> {
-        fn replace(
-            haystack: &mut String,
-            needle: &str,
-            replacement: &str
-        ) -> Result<()> {
+        fn replace(haystack: &mut String, needle: &str, replacement: &str) -> Result<()> {
             if let Some(index) = haystack.find(needle) {
                 haystack.replace_range(index..index + needle.len(), replacement);
                 Ok(())
             } else {
                 Err(anyhow!(
-                "Failed to find text:\n{}\n…in completion script:\n{}",
-                needle, haystack
+                    "Failed to find text:\n{}\n…in completion script:\n{}",
+                    needle,
+                    haystack
                 ))
             }
         }
 
-        let aliases_dir =
-            config::rad_aliases_dir().with_context(||
-                "failed to list variables for alias completions")?;
-        let aliases =
-            Aliases::open(aliases_dir).with_context(||
-                "failed to list variables for alias completions")?;
+        let aliases_dir = config::rad_aliases_dir()
+            .with_context(|| "failed to list variables for alias completions")?;
+        let aliases = Aliases::open(aliases_dir)
+            .with_context(|| "failed to list variables for alias completions")?;
 
         let res = match self.comp_type {
-            CompType::alias => aliases.list_alias_completions().unwrap_or_else(|| "None".into()),
-            CompType::env => aliases.list_env_completions().unwrap_or_else(|| "None".into()),
+            CompType::alias => aliases
+                .list_alias_completions()
+                .unwrap_or_else(|| "None".into()),
+            CompType::env => aliases
+                .list_env_completions()
+                .unwrap_or_else(|| "None".into()),
             CompType::shell => {
                 let mut app = Rad::clap();
 
                 // FIX: Send errors up to StructOpt
-                let shell = Shell::from_str(
-                    &self.shell
-                    .as_ref()
-                    .unwrap_or(&ShellType::zsh)
-                    .to_string())
-                    .unwrap();
+                let shell =
+                    Shell::from_str(&self.shell.as_ref().unwrap_or(&ShellType::zsh).to_string())
+                        .unwrap();
 
                 let buffer = Vec::new();
                 let mut cursor = Cursor::new(buffer);
-                app.gen_completions_to(env!("CARGO_PKG_NAME"),
-                    shell,
-                    &mut cursor);
+                app.gen_completions_to(env!("CARGO_PKG_NAME"), shell, &mut cursor);
                 let buffer = cursor.into_inner();
-                let mut script = String::from_utf8(buffer)
-                    .expect("Clap completion not UTF-8");
+                let mut script = String::from_utf8(buffer).expect("Clap completion not UTF-8");
 
                 match shell {
-                    Shell::Zsh =>
+                    Shell::Zsh => {
                         for (needle, replacement) in comp_helper::ZSH_COMPLETION_REP {
                             replace(&mut script, needle, replacement)?;
-                    },
+                        }
+                    }
                     _ => println!(),
                 }
 

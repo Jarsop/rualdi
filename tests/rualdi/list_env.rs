@@ -21,6 +21,6 @@ fn filled() -> Result<()> {
     ]);
     let output = rad.cmd.output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(actual, "test TEST\n");
+    assert_eq!(actual, "test => TEST\n");
     Ok(())
 }

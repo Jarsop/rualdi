@@ -12,7 +12,6 @@
 
 [![asciicast](https://asciinema.org/a/428773.svg)](https://asciinema.org/a/428773)
 
-The fork is adding color to the output when listing the aliases and environment variables, as well as creating an `IndexMap` that will shorten directory names based off of common environment variables.
 
 ### TODO
 * Fix/add tests now after adding colored output
@@ -118,7 +117,6 @@ cargo install rualdi -f
 ```
 
 #### From source
-For this fork, install it this way
 ```sh
 cargo build --release
 cp target/release/rualdi <path>

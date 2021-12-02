@@ -1,5 +1,5 @@
-mod config;
 mod comp_helper;
+mod config;
 mod error;
 #[cfg(test)]
 mod fixture;
@@ -11,9 +11,9 @@ mod utils;
 
 use crate::error::SilentExit;
 use anyhow::Result;
+use clap::AppSettings;
 use std::process;
 use structopt::StructOpt;
-use clap::AppSettings;
 use subcommand::RadSubCmdRunnable;
 
 const ENV_VAR_HELP: &str = "\x1b[0;31mENVIRONMENT VARIABLES\x1b[0m

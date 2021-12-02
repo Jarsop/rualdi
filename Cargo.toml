@@ -1,17 +1,20 @@
 [package]
 name = "rualdi"
 version = "0.2.3"
-authors = ["Lucas Burns <lmb@lmburns.com>", "Jarsop <jarsop@outlook.com>"]
-description = "Rust Aliasing Directory (fork)"
+authors = ["Jean-Pierre Geslin <jarsop@outlook.com>", "Lucas Burns <lmb@lmburns.com>"]
+description = "Rust Aliasing Directory"
 license = "AGPL-3.0-or-later"
 edition = "2018"
-repository = "https://github.com/lmburns/rualdi"
+repository = "https://github.com/Jarsop/rualdi"
 categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "shell", "utility", "bash", "zsh"]
 readme = "README.md"
 
+[features]
+dumb_terminal = ["colored/no-color"]
+
 [dependencies]
-rualdlib = { version = "0.1.3", path = "rualdlib" }
+rualdlib = { version = "0.1.4", path = "rualdlib" }
 structopt = "0.3.17"
 anyhow = "1.0.32"
 dirs-next = "2.0.0"
@@ -22,14 +25,16 @@ clap = "2.33.3"
 async-channel = "1.6.1"
 
 [dev-dependencies]
+rualdi = { version = "0.2.3", path = ".", features = ["dumb_terminal"] }
+rualdlib = { version = "0.1.4", path = "rualdlib", features = ["dumb_terminal"] }
 tempfile = "3.1.0"
 toml = "0.5.6"
 serial_test = "0.5.0"
 gag = "0.1.10"
 
 [package.metadata.deb]
-maintainer = "Lucas Burns <lmb@lmburns.com>"
-copyright = "2021, lmburns <lmb@lmburns.com>"
+maintainer = "Jean-Pierre Geslin <jarsop@outlook.com>"
+copyright = "2021, Jean-Pierre Geslin <jarsop@outlook.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
 A tool to aliasing directories written safely in Rust."""

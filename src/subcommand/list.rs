@@ -7,6 +7,8 @@ use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
+#[cfg(test)]
+use terminal_size::terminal_size;
 
 /// Print aliases with their path and environment variable associated
 #[derive(Debug, StructOpt)]
@@ -48,7 +50,18 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), "Aliases:\n\n\t'test' => 'test'\n");
+        let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+        let equal_line = "=".repeat(width);
+        assert_eq!(
+            res.unwrap(),
+            format!(
+                "{}\n{: ^width$}\n{}\ntest         => test\n",
+                equal_line,
+                "ALIASES",
+                equal_line,
+                width = width - 1
+            )
+        );
     }
 
     #[test]
@@ -62,9 +75,17 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_ok());
+        let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+        let equal_line = "=".repeat(width);
         assert_eq!(
             res.unwrap(),
-            "Aliases:\n\n\t'test' => 'test'\n\t'test2' => 'test2'\n"
+            format!(
+                "{}\n{: ^width$}\n{}\ntest         => test\ntest2        => test2\n",
+                equal_line,
+                "ALIASES",
+                equal_line,
+                width = width - 1
+            )
         );
     }
 
@@ -81,9 +102,20 @@ mod tests {
         ]);
         let res = subcmd.run();
         assert!(res.is_ok());
+        let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+        let equal_line = "=".repeat(width);
         assert_eq!(
             res.unwrap(),
-            "Aliases:\n\n\t'test' => 'test'\n\t'test2' => 'test2'\n\nEnvironment variables:\n\n\t'TEST' => 'test'\n"
+            format!(
+                "{}\n{: ^width$}\n{}\ntest         => test\ntest2        => test2\n{}\n{: ^width$}\n{}\nTEST         => test\n",
+                equal_line,
+                "ALIASES",
+                equal_line,
+                equal_line,
+                "ENVIRONMENT VARIABLES",
+                equal_line,
+                width = width - 1
+            )
         );
     }
 }

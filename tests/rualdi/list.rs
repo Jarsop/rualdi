@@ -6,8 +6,7 @@ fn empty() -> Result<()> {
     let mut rad = common::create_rad("list");
     let output = rad.cmd.output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    let expected = String::from("No aliases found\n");
-    assert_eq!(actual, expected);
+    assert_eq!(actual, "No aliases found\n");
     Ok(())
 }
 
@@ -20,7 +19,6 @@ fn filled() -> Result<()> {
     ]);
     let output = rad.cmd.output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    let expected = String::from("Aliases:\n\n\t'test' => 'test'\n");
-    assert_eq!(actual, expected);
+    assert_eq!(actual, "=\nALIASES\n=\ntest         => test\n");
     Ok(())
 }

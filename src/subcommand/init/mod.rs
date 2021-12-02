@@ -25,11 +25,7 @@ pub struct Init {
     shell: Shell,
 
     /// Renames the 'rad' command and corresponding aliases
-    #[structopt(
-        long,
-        alias = "rad-cmd",
-        default_value = "rad")
-    ]
+    #[structopt(long, alias = "rad-cmd", default_value = "rad")]
     cmd: String,
 }
 

@@ -7,7 +7,7 @@ fn not_existing_var() -> Result<()> {
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stderr).unwrap();
     let expected = String::from(
-        r#"Error: fail to remove environment variable for alias 'test'
+        r#"Error: [env] Failed to remove for [alias] test
 
 Caused by:
     no such environment variable for alias 'test'
@@ -28,6 +28,6 @@ fn existing_var() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    assert_eq!(actual, "environment variable for alias 'test' removed\n");
+    assert_eq!(actual, "[env] Removed for [alias] test");
     Ok(())
 }

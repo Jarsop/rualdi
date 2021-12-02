@@ -6,14 +6,14 @@ fn not_existing_alias() -> Result<()> {
     let mut rad = common::create_rad("remove");
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stderr).unwrap();
-    let expected = String::from(
-        r#"Error: fail to remove alias 'test'
+    assert_eq!(
+        actual,
+        r#"Error: [alias] Failed to remove: test
 
 Caused by:
     alias 'test' not exists
-"#,
+"#
     );
-    assert_eq!(actual, expected);
     Ok(())
 }
 
@@ -26,7 +26,6 @@ fn existing_alias() -> Result<()> {
     ]);
     let output = rad.cmd.arg("test").output()?;
     let actual = String::from_utf8(output.stdout).unwrap();
-    let expected = String::from("alias 'test' removed\n");
-    assert_eq!(actual, expected);
+    assert_eq!(actual, "[alias] Removed: test\n");
     Ok(())
 }

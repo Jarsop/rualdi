@@ -4,11 +4,11 @@ use crate::ctype_exp;
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
 use anyhow::{Context, Result};
+use colored::*;
 use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
-use colored::*;
 
 /// Remove alias
 #[derive(Debug, StructOpt)]
@@ -23,16 +23,14 @@ impl RadSubCmdRunnable for Remove {
         let mut aliases = Aliases::open(aliases_dir).with_context(|| "fail to remove alias")?;
 
         for alias in &self.alias {
-            aliases
-                .remove(alias.to_owned())
-                .with_context(|| format!(
-                        "[{}] Failed to remove: {}",
-                        ctype_exp!("alias"),
-                        alias.red().bold()
-                ))?;
-            println!("[{}] Removed: {}",
-                ctype_exp!("alias"),
-                alias.red().bold());
+            aliases.remove(alias.to_owned()).with_context(|| {
+                format!(
+                    "[{}] Failed to remove: {}",
+                    ctype_exp!("alias"),
+                    alias.red().bold()
+                )
+            })?;
+            println!("[{}] Removed: {}", ctype_exp!("alias"), alias.red().bold());
             if let Ok(var) = aliases.get_env(alias) {
                 aliases.remove_env(alias.to_owned())?;
                 println!(
@@ -61,7 +59,10 @@ mod tests {
         });
         let res = subcmd.run();
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "fail to remove alias 'test'");
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "[alias] Failed to remove: test"
+        );
     }
 
     #[test]

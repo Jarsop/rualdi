@@ -285,15 +285,16 @@ path = "magenta"
                     reg.push(k.to_string());
                 }
 
-                let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(0);
+                let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+                let equal_line = "=".repeat(width).green().bold();
                 let mut res = String::new();
 
                 res.push_str(
                     format!(
                         "{}\n{: ^width$}\n{}\n",
-                        "=".repeat(width).green().bold(),
+                        equal_line,
                         "ALIASES".red().bold(),
-                        "=".repeat(width).green().bold(),
+                        equal_line,
                         width = width - 1
                     )
                     .as_str(),
@@ -328,9 +329,9 @@ path = "magenta"
                         res.push_str(
                             format!(
                                 "{}\n{: ^width$}\n{}\n",
-                                "=".repeat(width).green().bold(),
+                                equal_line,
                                 "ENVIRONMENT VARIABLES".red().bold(),
-                                "=".repeat(width).green().bold(),
+                                equal_line,
                                 width = width - 1
                             )
                             .as_str(),
@@ -709,7 +710,7 @@ impl MockAliases {
         aliases.insert("test".into(), "/test/haha".into());
         aliases.insert("Home".into(), "~".into());
 
-        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        let mut colors: BTreeMap<String, String> = BTreeMap::new();
         colors.insert("name".into(), "red".into());
         colors.insert("separator".into(), "cyan".into());
         colors.insert("path".into(), "green".into());
@@ -732,7 +733,7 @@ impl MockAliases {
         let mut vars: BTreeMap<String, String> = BTreeMap::new();
         vars.insert("test".into(), "TEST".into());
 
-        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        let mut colors: BTreeMap<String, String> = BTreeMap::new();
         colors.insert("name".into(), "red".into());
         colors.insert("separator".into(), "bright cyan".into());
         colors.insert("path".into(), "green".into());
@@ -757,7 +758,7 @@ impl MockAliases {
         vars.insert("test".into(), "TEST".into());
         vars.insert("test2".into(), "TEST2".into());
 
-        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        let mut colors: BTreeMap<String, String> = BTreeMap::new();
         colors.insert("name".into(), "red".into());
         colors.insert("separator".into(), "cyan".into());
         colors.insert("path".into(), "green".into());
@@ -776,7 +777,7 @@ impl MockAliases {
         let aliases: BTreeMap<String, String> = BTreeMap::new();
         let vars: BTreeMap<String, String> = BTreeMap::new();
 
-        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
+        let mut colors: BTreeMap<String, String> = BTreeMap::new();
         colors.insert("name".into(), "red".into());
         colors.insert("separator".into(), "cyan".into());
         colors.insert("path".into(), "green".into());
@@ -800,8 +801,6 @@ impl MockAliases {
         let mut vars: BTreeMap<String, String> = BTreeMap::new();
         vars.insert("test".into(), "TEST".into());
         vars.insert("test2".into(), "TEST2".into());
-
-        let mut colors: BTreeMap<String, Color> = BTreeMap::new();
 
         Aliases {
             aliases: Some(aliases),
@@ -1124,18 +1123,39 @@ mod tests_list {
     fn list_filled() {
         let aliases = MockAliases::open();
         let output = aliases.list();
-        let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\n";
+        let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+        let equal_line = "=".repeat(width);
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), expected_output);
+        assert_eq!(
+            output.unwrap(),
+            format!(
+                "{}\n{: ^width$}\n{}\nHome         => ~\ntest         => /test/haha\n",
+                equal_line,
+                "ALIASES",
+                equal_line,
+                width = width - 1
+            )
+        );
     }
 
     #[test]
     fn list_filled_env() {
         let aliases = MockAliases::open_with_env();
         let output = aliases.list();
-        let expected_output = "Aliases:\n\n\t'Home' => '~'\n\t'test' => '/test/haha'\n\nEnvironment variables:\n\n\t'TEST' => 'test'\n";
+        let width = terminal_size().map(|(w, _)| w.0 as usize).unwrap_or(1);
+        let equal_line = "=".repeat(width);
         assert!(output.is_some());
-        assert_eq!(output.unwrap(), expected_output);
+        assert_eq!(output.unwrap(),             format!(
+                "{}\n{: ^width$}\n{}\nHome         => ~\ntest         => /test/haha\n{}\n{: ^width$}\n{}\nTEST         => test\n",
+                equal_line,
+                "ALIASES",
+                equal_line,
+                equal_line,
+                "ENVIRONMENT VARIABLES",
+                equal_line,
+                width = width - 1
+            )
+);
     }
 
     #[test]
@@ -1161,16 +1181,14 @@ mod tests_list_env {
     fn list_filled_var() {
         let aliases = MockAliases::open_with_env();
         let output = aliases.list_env();
-        let expected_output = "test TEST\n";
-        assert_eq!(output, expected_output);
+        assert_eq!(output, "test => TEST\n");
     }
 
     #[test]
     fn list_filled_vars() {
         let aliases = MockAliases::open_with_vars();
         let output = aliases.list_env();
-        let expected_output = "test TEST\ntest2 TEST2\n";
-        assert_eq!(output, expected_output);
+        assert_eq!(output, "test => TEST\ntest2 => TEST2\n");
     }
 
     #[test]
