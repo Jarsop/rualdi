@@ -1,6 +1,6 @@
 [package]
 name = "rualdlib"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Jean-Pierre Geslin <jarsop@outlook.com>", "Lucas Burns <lmb@lmburns.com>", ]
 description = "Rust Aliasing Directory"
 license = "AGPL-3.0-or-later"
