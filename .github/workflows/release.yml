@@ -161,9 +161,9 @@ jobs:
         with:
           cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdi_local_version }} -o ${{ matrix.name }}
 
-      - name: Build | Deb armv7 package
+      - name: Build | Rust Cargo Deb Package Build (armv7, Debian)
         if: startsWith(matrix.target, 'armv7')
-        uses: ebbflow-io/cargo-deb-armv7-debian@1.0
+        uses: ebbflow-io/cargo-deb-armv7-debian@1.47.0-1
         with:
           cmd: cargo deb --target=${{ matrix.target }} --deb-version ${{ needs.version.outputs.rualdi_local_version }} -o ${{ matrix.name }} --no-strip
 
@@ -196,8 +196,8 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v2
 
-      - name: Build | Rpm Fedora package
-        uses: ebbflow-io/cargo-rpm-amd64-fedora@1.0
+      - name: Build | Rust Cargo Rpm Package Build (amd64, Fedora)
+        uses: ebbflow-io/cargo-rpm-amd64-fedora@1.47.0-1
         with:
           cmd: cargo rpm build -v -t ${{ matrix.target }} -o ${{ matrix.name }}
 
@@ -230,8 +230,8 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v2
        
-      - name: Build | Rpm OpenSUSE Leap package
-        uses: ebbflow-io/cargo-rpm-amd64-opensuseleap@1.0
+      - name: Build | Rust Cargo Rpm Package Build (amd64, OpenSUSELeap)
+        uses: ebbflow-io/cargo-rpm-amd64-opensuseleap@1.50.0
         with:
           cmd: cargo rpm build -v -t ${{ matrix.target }} -o ${{ matrix.name }}
 

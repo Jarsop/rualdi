@@ -7,7 +7,7 @@ license = "AGPL-3.0-or-later"
 edition = "2018"
 repository = "https://github.com/Jarsop/rualdi"
 categories = ["command-line-utilities", "filesystem"]
-keywords = ["cli", "shell", "utility", "bash", "zsh", "fzf"]
+keywords = ["cli", "utility", "bash", "zsh", "fzf"]
 
 [features]
 dumb_terminal = ["colored/no-color"]
@@ -26,4 +26,4 @@ terminal_size = "0.1.17"
 
 [dev-dependencies]
 tempfile = "3.1.0"
-rualdlib = { version = "0.1.4", path = ".", features = ["dumb_terminal"] }
+rualdlib = { path = ".", features = ["dumb_terminal"] }
