@@ -1,4 +1,4 @@
-# Rualdi
+# Rualdi (Rust Aliasing Directory)
 
 [![crates.io](https://img.shields.io/crates/v/rualdi?logo=Rust)](https://crates.io/crates/rualdi)
 [![Crates.io](https://img.shields.io/crates/d/rualdi?label=crates.io%20downloads&logo=Rust)](https://crates.io/crates/rualdi)
@@ -10,25 +10,58 @@
 [![Crates.io](https://img.shields.io/crates/l/rualdi/0.1.4)](https://crates.io/crates/rualdi)
 [![Codecov](https://img.shields.io/codecov/c/github/Jarsop/rualdi)](https://codecov.io/gh/Jarsop/rualdi)
 
-Rust Aliasing Directory
+[![asciicast](https://asciinema.org/a/428773.svg)](https://asciinema.org/a/428773)
 
-## Table of contents
+The fork is adding color to the output when listing the aliases and environment variables, as well as creating an `IndexMap` that will shorten directory names based off of common environment variables.
 
-- [Introduction](#introduction)
-- [Examples](#examples)
-- [Getting started](#getting-started)
-  - [Installing `rualdi`](#step-1-installing-rualdi)
-  - [Adding `rualdi` to your shell](#step-3-adding-rualdi-to-your-shell)
-    - [bash](#bash)
-    - [zsh](#zsh)
-- [Configuration](#configuration)
-  - [`init` flags](#init-flags)
-  - [Environment variables](#environment-variables)
+### TODO
+* Fix/add tests now after adding colored output
+* Bash completions
+* Color the `%HASH` mapping differently
+* Add `bg`, and `TrueColor` support
+* Colors are getting erased in config
+* Set colors for `radf` function
+* Using `%HASH` in `radf` function
+* Use `fzf`: `tokio` and `async`
+
+### Table of Contents
+
+- [Rualdi (Rust Aliasing Directory)](#rualdi-rust-aliasing-directory)
+    - [TODO](#todo)
+    - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Examples](#examples)
+  - [Getting started](#getting-started)
+    - [Step 1: Installing `rualdi`](#step-1-installing-rualdi)
+      - [From Cargo registry](#from-cargo-registry)
+      - [From source](#from-source)
+      - [On Debian](#on-debian)
+        - [From source](#from-source-1)
+        - [From .deb pre-built released](#from-deb-pre-built-released)
+      - [Other (via pre-compiled binary)](#other-via-pre-compiled-binary-)
+    - [Step 2: Adding `rualdi` to your shell](#step-2-adding-rualdi-to-your-shell)
+      - [`bash`](#bash)
+      - [`zsh`](#zsh)
+  - [Configuration](#configuration)
+    - [`init` flags](#init-flags)
+    - [Environment variables](#environment-variables)
+    - [`[colors]` section](#colors-section)
+    - [`[alias_map]` section](#alias_map-section)
+  - [`fzf` integration](#fzf-integration)
+      - [No arguments](#no-arguments)
+      - [`pushd` wrapper](#pushd-wrapper)
+      - [Recently visited directories](#recently-visited-directories)
+      - [`rad` wrapper](#rad-wrapper)
+  - [Completions](#completions)
+      - [Installation](#installation)
+  - [Extra](#extra)
+      - [Subcommand Aliases](#subcommand-aliases)
+      - [Documentation for Crates](#documentation-for-crates)
 
 ## Introduction
 
-Rualdi allows you to create aliases on directories and to provide
-an encapsulation of the built-in `cd` command function for easy change of working directory.
+Rualdi allows you to create aliases for directories and provides
+an encapsulation of the builtin `cd` command for easy change of the working directory.
 You can also add environment variable which points on an alias.
 All variables sourced in your environment are prefixed by `RAD_`.
 
@@ -36,37 +69,43 @@ Inspired by [`zoxide`](https://github.com/ajeetdsouza/zoxide) code.
 
 ## Examples
 ```sh
-rada workdir                     # Add current directory with workdir as alias
-rada www /var/www                # Add /var/www directory with www as alias
-rada stuff ~/stuff               # Works with home tild alias
+rada workdir           # Add current directory with workdir as alias
+rada www /var/www      # Add /var/www directory with www as alias
+rada stuff ~/stuff     # Works with home tilde alias
 
-radax workdir                    # Add current directory with workdir as alias
-                                 # and add environment variable named RAD_WORKDIR
-                                 # in current environment and in configuration file
-radax workdir . wd               # Add current directory with workdir as alias
-                                 # and add environment variable named RAD_WD
-                                 # in current environment and to the configuration file
+radax workdir          # Add current directory with workdir as alias
+                       # and add environment variable named RAD_WORKDIR
+                       # in current environment and in configuration file
 
-radx workdir wd                  # Add environment variable named RAD_WD which points
-                                 # on alias workdir in current environment
-                                 # and to the configuration file
-radx workdir                     # Add environment variable named RAD_WORKDIR
-                                 # which points on alias workdir in current environment
-                                 # and to the configuration file
+radax workdir . wd     # Add current directory with workdir as alias
+                       # and add environment variable named RAD_WD
+                       # in current environment and to the configuration file
 
-radxn workdir wd                 # Add environment variable named RAD_WD which points
-                                 # on alias workdir in current environment
-                                 # without adding it to the configuration file
+radx workdir wd        # Add environment variable named RAD_WD which points
+                       # on alias workdir in current environment
+                       # and to the configuration file
 
-rad www/some-site                # Perform cd in /var/www/some-site
-rad -                            # Go back to previous directory as cd do it
+radx workdir           # Add environment variable named RAD_WORKDIR
+                       # which points on alias workdir in current environment
+                       # and to the configuration file
 
-radr workdir                     # Remove workdir alias and environment variable associated if exists
-radr www stuff                   # Works with multiple aliases at same time
+radxn workdir wd       # Add environment variable named RAD_WD which points
+                       # on alias workdir in current environment
+                       # without adding it to the configuration file
 
-radxr workdir                    # Remove environment variable which points on alias workdir
+rad www/some-site      # Perform cd in /var/www/some-site
+rad -                  # Go back to previous directory by cd'ing to it
+rad -4                 # With zsh, this acts as a pushd wrapper
 
-radl                             # List aliases and environment variables
+radr workdir           # Remove workdir alias and environment variable associated if exists
+radr www stuff         # Works with multiple aliases at same time
+
+radrx workdir          # Remove environment variable which points on alias workdir
+
+radl                   # List aliases and environment variables
+
+radf                   # List directories with fzf and cd to selection
+                       # There are several more options with this function explained below
 ```
 
 ## Getting started
@@ -79,6 +118,7 @@ cargo install rualdi -f
 ```
 
 #### From source
+For this fork, install it this way
 ```sh
 cargo build --release
 cp target/release/rualdi <path>
@@ -94,16 +134,16 @@ cargo deb
 sudo dpkg -i /target/debian/rualdi_<version>_<arch>.deb
 ```
 
-##### From .deb prebuilt released
-You can download a precompiled `.deb` package from the
+##### From .deb pre-built released
+You can download a pre-compiled `.deb` package from the
 [releases](https://github.com/Jarsop/rualdi/releases) page and add run:
 
 ```sh
 sudo dpkg -i /target/debian/rualdi_<version>_<arch>.deb
 ```
 
-#### Other (via precompiled binary) [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
-Alternatively, you can also download a precompiled binary from the
+#### Other (via pre-compiled binary) [![GitHub releases](https://img.shields.io/github/v/release/Jarsop/rualdi?color=blue&label=GitHub%20Releases&&logo=GitHub&sort=semver)](https://github.com/Jarsop/rualdi/releases)
+Alternatively, you can also download a pre-compiled binary from the
 [releases](https://github.com/Jarsop/rualdi/releases) page and add it to
 your `PATH`.
 
@@ -111,7 +151,7 @@ your `PATH`.
 
 Currently only `bash` and `zsh` are supported.
 
-#### bash
+#### `bash`
 
 Add the following line to your `~/.bashrc`:
 
@@ -119,7 +159,7 @@ Add the following line to your `~/.bashrc`:
 eval "$(rualdi init bash)"
 ```
 
-#### zsh
+#### `zsh`
 
 Add the following line to your `~/.zshrc`:
 
@@ -140,4 +180,128 @@ eval "$(rualdi init zsh)"
 - `$_RAD_NO_ECHO`: when set to `1`, `rad` will not print the matched directory before navigating to it
 - `$_RAD_RESOLVE_SYMLINKS`: when set to `1`, `rad` will resolve symlinks before print the matched directory.
 
-[`dirs-next` documentation]: https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html
+### `[colors]` section
+
+The default colors that are used are the following, and can be found in the `$_RAD_ALIASES_DIR/rualdi.toml` file.
+```toml
+[colors]
+name = "bright yellow"
+separator = "bright cyan"
+path = "magenta"
+```
+The available colors are:
+* `red`, `bright red`
+* `yellow`, `bright yellow`
+* `green`, `bright green`
+* `blue`, `bright blue`
+* `cyan`, `bright cyan`
+* `magenta`, `bright magenta`
+* `white`, `bright white`
+* `black`, `bright black`
+
+### `[alias_map]` section
+Sometimes the paths can get fairly long, so it is possible to create a hash (really an [`IndexMap`](https://docs.rs/indexmap/1.7.0/indexmap/)) that will map common paths to something like the following:
+
+```
+/Users/user/.config/zsh/zsh.d = %ZDOTDIR/zsh.d
+```
+
+It can be configured in `rualdi.toml`, and it is possible to use both a tilde (`~`) and environment variables.
+The left-side is what will be prefixed with a `%` and displayed.
+
+**NOTE:** It is wise to create the hash with the most specific variables at the beginning, and the least specific variables at the end.
+```toml
+[alias_hash]
+ZDOTDIR = "$ZDOTDIR"
+XDG_CONFIG_HOME = "/Users/user/.config"
+XDG_CACHE_HOME = "~/.cache"
+XDG_DATA_HOME = "${HOME}/.local/share"
+HOME = "$HOME"
+```
+
+There are already several of these mappings that are ready to be implemented and can be turn on with any of the three:
+```toml
+[alias_hash]
+use_default = "on"
+use_default = "1" # Must be a string
+use_default = "yes"
+```
+
+## `fzf` integration
+
+**Requires**:
+  * `fzf`
+
+The command `radf` (or `<your_cmd>f`) provides a way to use `rualdi` like [`formarks`](https://github.com/wfxr/formarks) (a `zsh` plugin), which
+allows one to display the directory aliases with `fzf` and then `cd` to the selection.
+
+#### No arguments
+```sh
+# A query here is optional
+radf <query>
+```
+
+#### `pushd` wrapper
+```sh
+# This can be any digit
+radf -3
+```
+
+#### Recently visited directories
+```sh
+# A query here is optional
+radf -d <query>
+```
+
+#### `rad` wrapper
+```sh
+# Will also go back to most recently visited directory
+radf -
+rad -
+
+# If query is an exact match with an alias, then it's the same behavior as `rad`
+radf <query>
+```
+
+## Completions
+
+As of now, only `zsh` completions are available.
+This works the best with [`fzf-tab`](https://github.com/aloxaf/fzf-tab), which completes your command with `fzf` when using `<TAB>`
+
+#### Installation
+
+This command prints the completions to `stdout`, so it can be redirected to file file and placed in your `fpath`.
+These completions only work with the actual `rualdi` binary, and therefore will not work with the aliases that are set because they are all individual functions.
+
+To get completions for the aliases, move the file `completions/_rualdi_funcs` into your `fpath` as well.
+
+```sh
+rualdi completions shell zsh > _rualdi
+```
+
+## Extra
+
+#### Subcommand Aliases
+
+Another way to use `rualdi` is to set `rualdi` itself to an alias, and use each subcommands' own alias.
+
+For example, in your `.zshrc` or `.bashrc`, place `alias r="rualdi"`. Then use the following aliases:
+
+```sh
+r a    # rualdi add
+r ax   # rualdi add-env
+r i    # rualdi init
+r l    # rualdi list
+r la   # rualdi list-alias
+r lx   # rualdi list-env
+r r    # rualdi remove
+r rx   # rualdi remove-env
+r res  # rualdi resolve
+r resx # rualdi resolve-env
+
+r comp # rualdi completions
+```
+
+#### Documentation for Crates
+
+* [`dirs-next`](https://docs.rs/dirs-next/latest/dirs_next/fn.data_local_dir.html)

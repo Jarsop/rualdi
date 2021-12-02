@@ -1,4 +1,5 @@
 use crate::config;
+use crate::ctype_exp;
 #[cfg(test)]
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
@@ -7,6 +8,7 @@ use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
+use colored::*;
 
 /// Remove environment variable for a provided alias
 #[derive(Debug, StructOpt)]
@@ -17,29 +19,40 @@ pub struct RemoveEnv {
 
 impl RadSubCmdRunnable for RemoveEnv {
     fn run(&self) -> Result<String> {
+        // "fail to remove environment variable for alias '{}'",
+        // TODO: add color here
         let aliases_dir = config::rad_aliases_dir().with_context(|| {
             format!(
-                "fail to remove environment variable for alias '{}'",
-                self.alias
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                self.alias.red().bold()
             )
         })?;
         let mut aliases = Aliases::open(aliases_dir).with_context(|| {
             format!(
-                "fail to remove environment variable for alias '{}'",
-                self.alias
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                self.alias.red().bold()
             )
         })?;
 
         aliases.remove_env(self.alias.to_owned()).with_context(|| {
             format!(
-                "fail to remove environment variable for alias '{}'",
-                self.alias
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                self.alias.red().bold()
             )
         })?;
 
+        // "environment variable for alias '{}' removed\n",
         Ok(format!(
-            "environment variable for alias '{}' removed\n",
-            self.alias
+            "[{}] Removed: for [{}] {}",
+            ctype_exp!("env"),
+            ctype_exp!("alias"),
+            self.alias.red().bold()
         ))
     }
 }
@@ -64,7 +77,12 @@ mod tests {
         assert!(res.is_ok());
         assert_eq!(
             res.unwrap(),
-            "environment variable for alias 'test' removed\n"
+            format!(
+                "[{}] Removed for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 
@@ -78,7 +96,12 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to remove environment variable for alias 'test'"
+            format!(
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 
@@ -97,7 +120,12 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "fail to remove environment variable for alias 'test'"
+            format!(
+                "[{}] Failed to remove for [{}] {}",
+                ctype_exp!("env"),
+                ctype_exp!("alias"),
+                "test".red().bold()
+            )
         );
     }
 }

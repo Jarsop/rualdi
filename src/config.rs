@@ -1,20 +1,27 @@
 use anyhow::{bail, Context, Result};
 #[cfg(test)]
 use serial_test::serial;
-use std::env;
-use std::fs;
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 pub fn rad_aliases_dir() -> Result<PathBuf> {
     let aliases_dir = match env::var_os("_RAD_ALIASES_DIR") {
         Some(data_osstr) => PathBuf::from(data_osstr),
-        None => match dirs_next::data_local_dir() {
-            Some(mut aliases_dir) => {
-                aliases_dir.push("rualdi");
-                aliases_dir
+        None => {
+            #[cfg(target_os = "macos")]
+            let config_dir_og = std::env::var_os("XDG_DATA_HOME")
+                .map(PathBuf::from)
+                .filter(|p| p.is_absolute())
+                .or_else(|| dirs_next::home_dir().map(|d| d.join(".local").join("share")));
+
+            #[cfg(not(target_os = "macos"))]
+            let config_dir_og = dirs_next::data_local_dir();
+
+            if let Some(conf_dir) = config_dir_og.map(|d| d.join(env!("CARGO_PKG_NAME"))) {
+                conf_dir
+            } else {
+                bail!("could not find config directory, please set _RAD_ALIASES_DIR manually")
             }
-            None => bail!("could not find config directory, please set _RAD_ALIASES_DIR manually"),
-        },
+        }
     };
 
     // This will fail when `aliases_dir` points to a file or a broken symlink, but
@@ -42,6 +49,10 @@ pub fn rad_resolve_symlinks() -> bool {
         None => false,
     }
 }
+
+// pub fn fzf_opts() -> Option<OsString> {
+//     env::var_os("_RAD_FZF_OPTS")
+// }
 
 #[cfg(test)]
 mod tests {

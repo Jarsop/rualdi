@@ -1,20 +1,25 @@
 [package]
 name = "rualdi"
-version = "0.2.1"
-authors = ["Jarsop <jarsop@outlook.com>"]
-description = "Rust Aliasing Directory"
+version = "0.2.3"
+authors = ["Lucas Burns <lmb@lmburns.com>", "Jarsop <jarsop@outlook.com>"]
+description = "Rust Aliasing Directory (fork)"
 license = "AGPL-3.0-or-later"
 edition = "2018"
-repository = "https://github.com/jarsop/rualdi"
+repository = "https://github.com/lmburns/rualdi"
 categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "shell", "utility", "bash", "zsh"]
 readme = "README.md"
 
 [dependencies]
-rualdlib = { version = "0.1.1", path = "rualdlib" }
+rualdlib = { version = "0.1.3", path = "rualdlib" }
 structopt = "0.3.17"
 anyhow = "1.0.32"
 dirs-next = "2.0.0"
+colored = "2.0.0"
+terminal_size = "0.1.17"
+glob = "0.3.0"
+clap = "2.33.3"
+async-channel = "1.6.1"
 
 [dev-dependencies]
 tempfile = "3.1.0"
@@ -23,8 +28,8 @@ serial_test = "0.5.0"
 gag = "0.1.10"
 
 [package.metadata.deb]
-maintainer = "Jarsop <jarsop@outlook.com>"
-copyright = "2020, Jarsop <jarsop@outlook.com>"
+maintainer = "Lucas Burns <lmb@lmburns.com>"
+copyright = "2021, lmburns <lmb@lmburns.com>"
 license-file = ["LICENSE", "4"]
 extended-description = """\
 A tool to aliasing directories written safely in Rust."""
@@ -33,7 +38,7 @@ section = "utility"
 priority = "optional"
 assets = [
     ["target/release/rualdi", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/rualdi/README", "644"],
+    ["README.md", "usr/local/share/doc/rualdi/README", "644"],
 ]
 
 [package.metadata.rpm]
@@ -43,4 +48,4 @@ package = "rualdi"
 buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
-rualdi = { path = "/usr/bin/rualdi" }
+rualdi = { path = "/usr/local/bin/rualdi" }

@@ -1,4 +1,5 @@
 use crate::config;
+use crate::ctype_exp;
 #[cfg(test)]
 use crate::fixture;
 use crate::subcommand::RadSubCmdRunnable;
@@ -7,6 +8,7 @@ use rualdlib::Aliases;
 #[cfg(test)]
 use serial_test::serial;
 use structopt::StructOpt;
+use colored::*;
 
 /// Remove alias
 #[derive(Debug, StructOpt)]
@@ -23,13 +25,22 @@ impl RadSubCmdRunnable for Remove {
         for alias in &self.alias {
             aliases
                 .remove(alias.to_owned())
-                .with_context(|| format!("fail to remove alias '{}'", alias))?;
-            println!("alias '{}' removed", alias);
-            if let Ok(var) = aliases.get_env(&alias) {
+                .with_context(|| format!(
+                        "[{}] Failed to remove: {}",
+                        ctype_exp!("alias"),
+                        alias.red().bold()
+                ))?;
+            println!("[{}] Removed: {}",
+                ctype_exp!("alias"),
+                alias.red().bold());
+            if let Ok(var) = aliases.get_env(alias) {
                 aliases.remove_env(alias.to_owned())?;
                 println!(
-                    "environment variable '{}' for alias '{}' removed",
-                    var, alias
+                    "[{}] Removed: {} for [{}] {}",
+                    ctype_exp!("env"),
+                    var.red().bold(),
+                    ctype_exp!("alias"),
+                    alias.red().bold()
                 );
             }
         }

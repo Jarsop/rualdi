@@ -1,0 +1,138 @@
+#compdef rualdi
+
+autoload -U is-at-least
+
+_rualdi() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+":: :_rualdi_commands" \
+"*::: :->rualdi" \
+&& ret=0
+    case $state in
+    (rualdi)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:rualdi-command-$line[1]:"
+        case $line[1] in
+(add|a)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':alias -- Alias to path:_files' \
+'::path -- Path to aliasing, if not provided current directory is used:_files' \
+&& ret=0
+;;
+(add-env|ax)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':alias -- Alias to link:_files' \
+'::var -- Environment variable to link on alias, if not provided alias is used:_files' \
+&& ret=0
+;;
+(init|i)
+_arguments "${_arguments_options[@]}" \
+'--cmd=[Renames the '\''rad'\'' command and corresponding aliases]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':shell:(bash zsh)' \
+&& ret=0
+;;
+(list|l|list-alias|la|list-env|lx)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+(remove|r)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+'::alias -- Alias to remove:_files' \
+&& ret=0
+;;
+(remove-env|rx)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':alias -- Alias for which to remove the environment variable:_files' \
+&& ret=0
+;;
+(resolve|res)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':path -- Path to resolve alias:_files' \
+&& ret=0
+;;
+(resolve-env|resx)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':alias -- Alias for which to find environment variable:_files' \
+&& ret=0
+;;
+(completions|comp)
+_arguments "${_arguments_options[@]}" \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+':comp-type -- Variable type to list for help with completions:(alias env shell)' \
+'::shell -- Shell to be used for completions (can only be used with shell):(zsh bash)' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_rualdi_commands] )) ||
+_rualdi_commands() {
+    local commands; commands=(
+        "add:Add new path alias" \
+"add-env:Add new environment variable for an alias" \
+"init:Generates shell configuration" \
+"list:Print aliases with their path and environment variable associated" \
+"list-alias:Print alias and its associated path (not colored)" \
+"list-env:Print environment variables in format <alias var>" \
+"remove:Remove alias" \
+"remove-env:Remove environment variable for a provided alias" \
+"resolve:Resolve alias" \
+"resolve-env:Resolve enironment variable from alias" \
+"completions:Print aliases to be used for completions" \
+    )
+    _describe -t commands 'rualdi commands' commands "$@"
+}
+
+_rualdi "$@"
